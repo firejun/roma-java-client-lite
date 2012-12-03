@@ -1,5 +1,6 @@
 package com.rakuten.rit.roma.romac4j.pool;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -28,10 +29,22 @@ public class SocketPoolFactory implements PoolableObjectFactory<Socket> {
 	}
 
 	public boolean validateObject(Socket socket) {
-		if (socket instanceof Socket) {
-			return socket.isConnected();
-		}
-		return false;
+		return socket.isConnected();
+//		byte[] b = new byte[1];
+//		if (socket instanceof Socket) {
+//			try {
+//				BufferedInputStream is = new BufferedInputStream(socket.getInputStream());
+//				is.read(b, 0, 0);
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//				return false;
+//			} 
+//			if (b[0] == 0) {
+//				return true;
+//			}
+//			return true;
+//		}
+//		return false;
 	}
 
 	public void activateObject(Socket socket) throws Exception {

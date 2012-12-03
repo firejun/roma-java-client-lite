@@ -7,10 +7,12 @@ import java.util.HashMap;
 
 import org.apache.log4j.Logger;
 
+import com.rakuten.rit.roma.romac4j.utils.PropertiesUtils;
 import com.rakuten.rit.roma.romac4j.utils.StringUtils;
 
 public class Routing {
 	protected static Logger log = Logger.getLogger(Routing.class.getName());
+	private static PropertiesUtils props = PropertiesUtils.getInstance();
 
 	public Routing() {
 	}
@@ -18,7 +20,7 @@ public class Routing {
 	public static String getMklHash(Socket socket) {
 		PrintWriter writer = null;
 		BufferedInputStream is = null;
-		StringBuffer sb = null;
+		String str = null;
 		try {
 			// Output stream open
 			writer = new PrintWriter(socket.getOutputStream(), true);
@@ -31,18 +33,19 @@ public class Routing {
 			is = new BufferedInputStream(socket.getInputStream());
 
 			// # Length
-			sb = StringUtils.readOneLine(is);
+			str = StringUtils.readOneLine(is,
+					Integer.valueOf(props.getProperties().getProperty("bufferSize")));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return sb.toString();
+		return str;
 	}
 
 	public static HashMap<String, Object> getRoutingDump(Socket socket) throws Exception {
 		HashMap<String, Object> routingDump = new HashMap<String, Object>();
 		BufferedInputStream is = null;
 		PrintWriter writer = null;
-		StringBuffer sb = null;
+		String str = null;
 		byte[] buff = null;
 		byte[] b = new byte[1];
 		int rtLen = 0;
@@ -70,9 +73,10 @@ public class Routing {
 			is = new BufferedInputStream(socket.getInputStream());
 
 			// # Length
-			sb = StringUtils.readOneLine(is);
+			str = StringUtils.readOneLine(is,
+					Integer.valueOf(props.getProperties().getProperty("bufferSize")));
 			
-			rtLen = Integer.parseInt(sb.toString());
+			rtLen = Integer.parseInt(str);
 			log.debug(rtLen);
 
 			// Initialize buffer
@@ -85,9 +89,8 @@ public class Routing {
 			}
 
 			// # 2 bytes('RT'):magic code
-			sb = new StringBuffer();
-			sb.append(new String(new byte[]{buff[pos], buff[pos + 1]}));
-			if (!sb.toString().equals("RT")) {
+			str = new String(new byte[]{buff[pos], buff[pos + 1]});
+			if (!str.equals("RT")) {
 				log.debug("This is not RT Data.");
 				throw new Exception("Illegal Format.");
 			}
@@ -170,7 +173,7 @@ public class Routing {
 			routingDump.put("nodeId", nodeId);
 			routingDump.put("vClk", vClk);
 			routingDump.put("vNode", vNode);
-			routingDump.put("socket", socket);
+			//routingDump.put("socket", socket);
 
 			System.out.println("Finish!");
 			return routingDump;

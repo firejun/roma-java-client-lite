@@ -3,6 +3,7 @@ package com.rakuten.rit.roma.romac4j.pool;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.Reader;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.HashMap;
 
@@ -41,14 +42,26 @@ public class SocketPoolSingleton {
 	public synchronized Socket getConnection(String nodeId) {
 		GenericObjectPool<Socket> pool = null;
 		Socket socket = null;
-
+//		byte[] b = new byte[1];
+		String[] host = nodeId.split("_");
 		if (poolMap != null && poolMap.containsKey(nodeId)) {
+//			socket = new Socket();
+//			try {
+//				socket.connect(new InetSocketAddress(host[0], Integer.valueOf(host[1])));
+//				BufferedInputStream is = new BufferedInputStream(socket.getInputStream());
+//				is.read(b, 0, 0);
+//				log.debug(b);
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//			}
+
 			pool = poolMap.get(nodeId);
 		} else {
-			String[] host = nodeId.split("_");
+//			String[] host = nodeId.split("_");
 			PoolableObjectFactory<Socket> factory =
 				new SocketPoolFactory(host[0], Integer.valueOf(host[1]));
 			pool = new GenericObjectPool<Socket>(factory, config);
+			//pool.setTestOnBorrow(true);
 //			try {
 //				for (int i=0; i < numOfConnection;i++) {
 //					pool.addObject();					
@@ -60,8 +73,12 @@ public class SocketPoolSingleton {
 		}
 
 		try {
+//			boolean boo = pool.getTestOnBorrow();
+//			log.debug("boo: " + boo);
+
 			socket = pool.borrowObject();
 			socket.setSoTimeout(timeout);
+
 		} catch (Exception e) {
 			try {
 				socket.close();

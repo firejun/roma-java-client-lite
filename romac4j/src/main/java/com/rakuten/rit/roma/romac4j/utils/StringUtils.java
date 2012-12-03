@@ -1,6 +1,6 @@
 package com.rakuten.rit.roma.romac4j.utils;
 
-import java.io.BufferedInputStream;
+import java.io.InputStream;
 
 public class StringUtils {
 
@@ -12,10 +12,11 @@ public class StringUtils {
 		return "10.184.17.15_11211";
 	}
 
-	public static StringBuffer readOneLine(BufferedInputStream is)
+	public static String readOneLine(InputStream is, int bufferSize)
 			throws Exception {
 		byte[] b = new byte[1];
-		StringBuffer sb = new StringBuffer();
+		byte[] buff = new byte[bufferSize];
+		int i=0;
 		while (true) {
 			try {
 				is.read(b, 0, 1);
@@ -24,12 +25,12 @@ public class StringUtils {
 					if (b[0] == 0x0a)
 						break;
 				}
-				sb.append(new String(b));
+				buff[i] = b[0];
+				i++;
 			} catch (Exception e) {
-				e.printStackTrace();
-				throw new Exception("Can't convert StringBuffer.");
+				throw new Exception("Can't convert header.");
 			}
 		}
-		return sb;
+		return new String(buff, 0, i);
 	}
 }

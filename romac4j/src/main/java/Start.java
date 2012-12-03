@@ -8,14 +8,14 @@ public class Start {
 		RomaClient rc = new RomaClient();
 		byte[] b = null;
 		long time0 = System.currentTimeMillis();
-		try {
-			for (int i=0; i < 500000; i++) {
+		for (int i=0; i < 500000; i++) {
+			try {
 				b = rc.get("foo");
 				log.debug(new String(b));
-				Thread.sleep(1000);
+			} catch (Exception e) {
+				log.error("Client Error.");
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
+			Thread.sleep(1000);
 		}
 
 		time0 = System.currentTimeMillis() - time0;

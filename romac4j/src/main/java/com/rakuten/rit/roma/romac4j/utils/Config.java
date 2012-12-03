@@ -8,4 +8,5 @@ public final class Config {
 	public static final String DEFAULT_MAX_ACTIVE = "10";
 	public static final String DEFAULT_MAX_IDLE = "10";
 	public static final String DEFAULT_TIMEOUT = "1000";
+	public static final String DEFAULT_BUFFER_SIZE = "4096";
 }

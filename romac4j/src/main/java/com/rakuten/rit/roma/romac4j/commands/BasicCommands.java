@@ -4,14 +4,19 @@ import java.io.BufferedInputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+import org.apache.log4j.Logger;
+
+import com.rakuten.rit.roma.romac4j.utils.PropertiesUtils;
 import com.rakuten.rit.roma.romac4j.utils.StringUtils;
 
 public class BasicCommands {
+	protected static Logger log = Logger.getLogger(BasicCommands.class.getName());
+	private static PropertiesUtils props = PropertiesUtils.getInstance();
 	public static byte[] get(String key, Socket socket) {
 		BufferedInputStream is = null;
 		PrintWriter writer = null;
 		String[] header = null;
-		StringBuffer sb = new StringBuffer();
+		String str = null;
 		byte[] buff = null;
 		byte[] b = new byte[1];
 		int iVal = 0;
@@ -26,10 +31,11 @@ public class BasicCommands {
 
 			// Receive header part
 			is = new BufferedInputStream(socket.getInputStream());
-			sb = StringUtils.readOneLine(is);
+			str = StringUtils.readOneLine(is,
+					Integer.valueOf(props.getProperties().getProperty("bufferSize")));
 
 			// Analyze header part
-			header = sb.toString().split(" ");
+			header = str.split(" ");
 			if (header.length == 4) {
 				iVal = Integer.valueOf(header[3]);
 
@@ -43,7 +49,7 @@ public class BasicCommands {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("Get failed.");
 		}
 		return buff;
 	}
