@@ -20,14 +20,15 @@ public final class RoutingWatchingThread extends Thread {
 
 	public void run() {
 		SocketPoolSingleton sps = SocketPoolSingleton.getInstance();
-		Random rnd = new Random(new Integer(routingDump.get("numOfNodes").toString()));
+		//Random rnd = new Random(new Integer(routingDump.get("numOfNodes").toString()));
 		while(true) {
-			int rndVal = rnd.nextInt();
-			log.debug("rnd: " + rndVal);
+			//int rndVal = rnd.nextInt();
+			//log.debug("rnd: " + rndVal);
 			String[] nodeId = (String[])routingDump.get("nodeId");
 			Socket socket = null;
 			try {
-				socket = sps.getConnection(nodeId[rndVal]);
+				//socket = sps.getConnection(nodeId[rndVal]);
+				socket = sps.getConnection(nodeId[0]);
 				String mklHash = Routing.getMklHash(socket);
 				if (!this.mklHash.equals(mklHash)) {
 					this.mklHash = mklHash;
@@ -44,7 +45,7 @@ public final class RoutingWatchingThread extends Thread {
 				e1.printStackTrace();
 			}
 			try {
-				sps.returnConnection(nodeId[rndVal], socket);
+				sps.returnConnection(nodeId[0], socket);
 				Thread.sleep(5000);
 			} catch (Exception e) {
 				e.printStackTrace();
