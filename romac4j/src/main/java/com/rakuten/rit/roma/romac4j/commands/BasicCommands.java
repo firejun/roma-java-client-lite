@@ -3,6 +3,7 @@ package com.rakuten.rit.roma.romac4j.commands;
 import java.io.BufferedInputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Properties;
 
 import org.apache.log4j.Logger;
 
@@ -11,8 +12,8 @@ import com.rakuten.rit.roma.romac4j.utils.StringUtils;
 
 public class BasicCommands {
 	protected static Logger log = Logger.getLogger(BasicCommands.class.getName());
-	private static PropertiesUtils props = PropertiesUtils.getInstance();
-	public static byte[] get(String key, Socket socket) {
+
+	public static byte[] get(String key, Socket socket, Properties props) {
 		BufferedInputStream is = null;
 		PrintWriter writer = null;
 		String[] header = null;
@@ -32,7 +33,7 @@ public class BasicCommands {
 			// Receive header part
 			is = new BufferedInputStream(socket.getInputStream());
 			str = StringUtils.readOneLine(is,
-					Integer.valueOf(props.getProperties().getProperty("bufferSize")));
+					Integer.valueOf(props.getProperty("bufferSize")));
 
 			// Analyze header part
 			header = str.split(" ");

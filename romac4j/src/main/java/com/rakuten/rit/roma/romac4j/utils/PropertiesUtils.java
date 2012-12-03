@@ -4,22 +4,9 @@ import java.io.FileInputStream;
 import java.util.Properties;
 
 public class PropertiesUtils {
-	private static PropertiesUtils instance = new PropertiesUtils();
+	private Properties props;
 
-	private PropertiesUtils() {
-	}
-
-	public static PropertiesUtils getInstance() {
-		return instance;
-	}
-
-	private static Properties props;
-
-	/**
-	 * 
-	 * @return Properties
-	 */
-	public Properties preparateProperties() {
+	public PropertiesUtils() {
 		props = new Properties();
 		props.setProperty("address", Config.DEFAULT_ROMA_ADDRESS);
 		props.setProperty("port", Config.DEFAULT_ROMA_PORT);
@@ -34,14 +21,13 @@ public class PropertiesUtils {
 		}catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public Properties getRomaClientProperties() {
 		return props;
 	}
 
-	public Properties getProperties() {
-		return props;
-	}
-	public Properties setTimeout(int timeout) {
+	public void setTimeout(int timeout) {
 		props.setProperty("timeout", String.valueOf(timeout));
-		return props;
 	}
 }

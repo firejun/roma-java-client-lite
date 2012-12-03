@@ -4,20 +4,21 @@ import java.io.BufferedInputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.Properties;
 
 import org.apache.log4j.Logger;
 
-import com.rakuten.rit.roma.romac4j.utils.PropertiesUtils;
 import com.rakuten.rit.roma.romac4j.utils.StringUtils;
 
 public class Routing {
 	protected static Logger log = Logger.getLogger(Routing.class.getName());
-	private static PropertiesUtils props = PropertiesUtils.getInstance();
+	private Properties props;
 
-	public Routing() {
+	public Routing(Properties props) {
+		this.props = props;
 	}
 
-	public static String getMklHash(Socket socket) {
+	public String getMklHash(Socket socket) {
 		PrintWriter writer = null;
 		BufferedInputStream is = null;
 		String str = null;
@@ -34,14 +35,14 @@ public class Routing {
 
 			// # Length
 			str = StringUtils.readOneLine(is,
-					Integer.valueOf(props.getProperties().getProperty("bufferSize")));
+					Integer.valueOf(props.getProperty("bufferSize")));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return str;
 	}
 
-	public static HashMap<String, Object> getRoutingDump(Socket socket) throws Exception {
+	public HashMap<String, Object> getRoutingDump(Socket socket) throws Exception {
 		HashMap<String, Object> routingDump = new HashMap<String, Object>();
 		BufferedInputStream is = null;
 		PrintWriter writer = null;
@@ -74,7 +75,7 @@ public class Routing {
 
 			// # Length
 			str = StringUtils.readOneLine(is,
-					Integer.valueOf(props.getProperties().getProperty("bufferSize")));
+					Integer.valueOf(props.getProperty("bufferSize")));
 			
 			rtLen = Integer.parseInt(str);
 			log.debug(rtLen);
@@ -173,9 +174,7 @@ public class Routing {
 			routingDump.put("nodeId", nodeId);
 			routingDump.put("vClk", vClk);
 			routingDump.put("vNode", vNode);
-			//routingDump.put("socket", socket);
 
-			System.out.println("Finish!");
 			return routingDump;
 
 		} catch (Exception e) {
