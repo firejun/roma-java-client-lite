@@ -19,7 +19,6 @@ public class BasicCommands {
 		String[] header = null;
 		String str = null;
 		byte[] buff = null;
-		byte[] b = new byte[1];
 		int iVal = 0;
 		
 		try {
@@ -44,10 +43,7 @@ public class BasicCommands {
 				buff = new byte[iVal];
 
 				// Read from stream
-				for (int i = 0; i < iVal; i++) {
-					is.read(b, 0, 1);
-					buff[i] = b[0];
-				}
+				is.read(buff, 0, iVal);
 			}
 		} catch (Exception e) {
 			log.error("Get failed.");

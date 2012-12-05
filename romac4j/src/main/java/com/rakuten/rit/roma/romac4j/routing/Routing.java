@@ -42,8 +42,9 @@ public class Routing {
 		return str;
 	}
 
-	public HashMap<String, Object> getRoutingDump(Socket socket) throws Exception {
-		HashMap<String, Object> routingDump = new HashMap<String, Object>();
+	public RoutingData getRoutingDump(Socket socket) throws Exception {
+		//HashMap<String, Object> routingDump = new HashMap<String, Object>();
+		RoutingData routingData = new RoutingData();
 		BufferedInputStream is = null;
 		PrintWriter writer = null;
 		String str = null;
@@ -166,21 +167,29 @@ public class Routing {
 
 
 			// Store to HashMap
-			routingDump.put("formatVer", formatVer);
-			routingDump.put("dgstBits", dgstBits);
-			routingDump.put("divBits", divBits);
-			routingDump.put("rn", rn);
-			routingDump.put("numOfNodes", numOfNodes);
-			routingDump.put("nodeId", nodeId);
-			routingDump.put("vClk", vClk);
-			routingDump.put("vNode", vNode);
+			//routingDump.put("formatVer", formatVer);
+			routingData.setFormatVer(formatVer);
+			//routingDump.put("dgstBits", dgstBits);
+			routingData.setDgstBits(dgstBits);
+			//routingDump.put("divBits", divBits);
+			routingData.setDivBits(divBits);
+			//routingDump.put("rn", rn);
+			routingData.setRn(rn);
+			//routingDump.put("numOfNodes", numOfNodes);
+			routingData.setNumOfNodes(numOfNodes);
+			//routingDump.put("nodeId", nodeId);
+			routingData.setNodeId(nodeId);
+			//routingDump.put("vClk", vClk);
+			routingData.setVClk(vClk);
+			//routingDump.put("vNode", vNode);
+			routingData.setVNode(vNode);
 
-			return routingDump;
+			return routingData;
 
 		} catch (Exception e) {
 			//socket.close();
-			e.printStackTrace();
-			throw new Exception("Socket Exception?");
+			//e.printStackTrace();
+			throw new Exception("RoutingDump Exception.");
 		}		
 	}
 

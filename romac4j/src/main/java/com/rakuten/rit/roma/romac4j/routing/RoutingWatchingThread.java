@@ -1,7 +1,6 @@
 package com.rakuten.rit.roma.romac4j.routing;
 
 import java.net.Socket;
-import java.util.HashMap;
 import java.util.Properties;
 import java.util.Random;
 
@@ -14,12 +13,12 @@ public final class RoutingWatchingThread extends Thread {
 	private SocketPoolSingleton sps = SocketPoolSingleton.getInstance();
 	private Properties props;
 	private Routing routing;
-	private HashMap<String, Object> routingDump;
 	private String mklHash;
+	private RoutingData routingData;
 
-	public RoutingWatchingThread(HashMap<String, Object> routingDump, String mklHash, Properties props) {
+	public RoutingWatchingThread(RoutingData routingData, String mklHash, Properties props) {
 		this.props = props;
-		this.routingDump = routingDump;
+		this.routingData = routingData;
 		this.mklHash = mklHash;
 	}
 
@@ -30,15 +29,19 @@ public final class RoutingWatchingThread extends Thread {
 		Socket socket = null;
 		String mklHash = null;
 		String[] nodeId = null;
+		int rndVal = 0;
 		while(true) {
-			int rndVal = rnd.nextInt(new Integer(routingDump.get("numOfNodes").toString()));
+			rndVal = rnd.nextInt(routingData.getNumOfNodes());
 			log.debug("rnd: " + rndVal);
-			nodeId = (String[])routingDump.get("nodeId");
+			nodeId = routingData.getNodeId();
 			try {
 				socket = sps.getConnection(nodeId[rndVal]);
 				if ((mklHash = routing.getMklHash(socket)) != null && !this.mklHash.equals(mklHash)) {
 					this.mklHash = mklHash;
-					routingDump = routing.getRoutingDump(socket);
+					RoutingData tempBuff = routing.getRoutingDump(socket);
+					synchronized (routingData) {
+						routingData = tempBuff;
+					}
 					log.debug("Routing change!");
 				} else {
 					log.debug("Routing no change!");
@@ -55,7 +58,9 @@ public final class RoutingWatchingThread extends Thread {
 		}
 	}
 
-	public synchronized HashMap<String, Object> getRoutingDump() {
-		return routingDump;
+	public RoutingData getRoutingData() {
+		synchronized (routingData){
+			return routingData;
+		}
 	}
 }

@@ -19,6 +19,9 @@ public class StringUtils {
 		int i=0;
 		while (true) {
 			try {
+				if (i > bufferSize) {
+					throw new ArrayIndexOutOfBoundsException("Too much size.");
+				}
 				is.read(b, 0, 1);
 				if (b[0] == 0x0d) {
 					is.read(b, 0, 1);
