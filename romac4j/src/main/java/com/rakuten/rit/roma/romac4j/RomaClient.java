@@ -1,8 +1,7 @@
 package com.rakuten.rit.roma.romac4j;
 
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Random;
+import java.security.NoSuchAlgorithmException;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
@@ -10,6 +9,7 @@ import org.apache.log4j.Logger;
 import com.rakuten.rit.roma.romac4j.commands.BasicCommands;
 import com.rakuten.rit.roma.romac4j.pool.SocketPoolSingleton;
 import com.rakuten.rit.roma.romac4j.routing.Routing;
+import com.rakuten.rit.roma.romac4j.routing.RoutingData;
 import com.rakuten.rit.roma.romac4j.routing.RoutingWatchingThread;
 import com.rakuten.rit.roma.romac4j.utils.PropertiesUtils;
 
@@ -18,7 +18,8 @@ public class RomaClient {
 	private PropertiesUtils props = new PropertiesUtils();
 	private SocketPoolSingleton sps = SocketPoolSingleton.getInstance();
 	private RoutingWatchingThread rwt;
-	
+	private RoutingData routingData;
+
 	public RomaClient(){
 		BasicConfigurator.configure();
 		log.debug("Init Section.");
@@ -26,23 +27,15 @@ public class RomaClient {
 		try {
 			// Set properties values
 			setEnv();
-			Routing routing = new Routing(props.getRomaClientProperties());
+
 			Socket socket = sps.getConnection(props.getRomaClientProperties().getProperty("address_port"));
-			HashMap<String, Object> routingDump = routing.getRoutingDump(socket);
+			Routing routing = new Routing(props.getRomaClientProperties());
+			routingData = routing.getRoutingDump(socket);
 			String mklHash = routing.getMklHash(socket);
 			sps.returnConnection(props.getRomaClientProperties().getProperty("address_port"), socket);
 
-			rwt = new RoutingWatchingThread(routingDump, mklHash, props.getRomaClientProperties());
+			rwt = new RoutingWatchingThread(routingData, mklHash, props.getRomaClientProperties());
 			rwt.start();
-
-//			while(true) {
-//				try {
-//					routingDump = rwt.getRoutingDump();
-//					Thread.sleep(5000);
-//				} catch (Exception e) {
-//					log.error("Main Loop Error.");
-//				}
-//			}
 
 		} catch (Exception e) {
 			log.error("Main Error.");
@@ -68,19 +61,24 @@ public class RomaClient {
 	 */
 	public byte[] get(String key) {
 		Socket socket;
-		byte[] b = null;
-		Random rnd = new Random(System.currentTimeMillis());
-		int rndVal = rnd.nextInt(new Integer(rwt.getRoutingDump().get("numOfNodes").toString()));
+		byte[] result = null;
 
-		String[] nodeId = (String[])rwt.getRoutingDump().get("nodeId");
-		log.debug("Access NodeId: " + nodeId[rndVal]);
+		String[] nodeId = rwt.getRoutingData().getNodeId();
+		long vn;
+		int[] i;
 		try {
-			socket = sps.getConnection(nodeId[rndVal]);
-			b = BasicCommands.get(key, socket, props.getRomaClientProperties());
-			sps.returnConnection(nodeId[rndVal], socket);
+			vn = rwt.getVn(key);
+			log.debug("vn: " + vn);
+			i = rwt.getRoutingData().getVNode().get((int)vn);
+			log.debug("nodeId: " + nodeId[i[0]]);
+			socket = sps.getConnection(nodeId[i[0]]);
+			result = BasicCommands.get(key, socket, props.getRomaClientProperties());
+			sps.returnConnection(nodeId[0], socket);
+		} catch (NoSuchAlgorithmException e1) {
+			log.error("NoSuchAlgorithmException Error.");
 		} catch (Exception e) {
-			log.debug("Error");
+			log.error("Error");
 		}
-		return b;
+		return result;
 	}
 }

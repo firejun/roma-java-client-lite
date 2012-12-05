@@ -146,10 +146,10 @@ public class Routing {
 			for (int i=0; i < Math.pow(2, divBits); i++) {
 				//long vn = (long)i << (dgstBits - divBits);
 				//log.debug("vn:" + vn);
-				long tmpClk = (buff[pos] << 24) & 0xff000000 |
-							(buff[pos + 1] << 16) & 0xff0000 |
-							(buff[pos + 2] << 8) & 0xff00 |
-							buff[pos + 3] & 0xff;
+				long tmpClk = (buff[pos] << 24) & 0xff000000L |
+							(buff[pos + 1] << 16) & 0xff0000L |
+							(buff[pos + 2] << 8) & 0xff00L |
+							buff[pos + 3] & 0xffL;
 				//log.debug("tmpClk:" + tmpClk);				
 				short tmpNumOfNodes = buff[pos + 4];
 				//log.debug("tmpNumOfNodes:" + tmpNumOfNodes);
@@ -167,21 +167,13 @@ public class Routing {
 
 
 			// Store to HashMap
-			//routingDump.put("formatVer", formatVer);
 			routingData.setFormatVer(formatVer);
-			//routingDump.put("dgstBits", dgstBits);
 			routingData.setDgstBits(dgstBits);
-			//routingDump.put("divBits", divBits);
 			routingData.setDivBits(divBits);
-			//routingDump.put("rn", rn);
 			routingData.setRn(rn);
-			//routingDump.put("numOfNodes", numOfNodes);
 			routingData.setNumOfNodes(numOfNodes);
-			//routingDump.put("nodeId", nodeId);
 			routingData.setNodeId(nodeId);
-			//routingDump.put("vClk", vClk);
 			routingData.setVClk(vClk);
-			//routingDump.put("vNode", vNode);
 			routingData.setVNode(vNode);
 
 			return routingData;
