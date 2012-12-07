@@ -1,6 +1,5 @@
 package com.rakuten.rit.roma.romac4j.pool;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;

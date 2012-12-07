@@ -9,8 +9,8 @@ public class RoutingData {
 	private short rn = 0;
 	private int numOfNodes = 0;
 	private String[] nodeId = null;
-	private HashMap<Integer, Long> vClk = new HashMap<Integer, Long>();
-	private HashMap<Integer, int[]> vNode = new HashMap<Integer, int[]>();
+	private HashMap<Long, Long> vClk = null;
+	private HashMap<Long, int[]> vNode = null;
 
 	public RoutingData() {
 	}
@@ -63,19 +63,19 @@ public class RoutingData {
 		this.nodeId = nodeId;
 	}
 
-	public HashMap<Integer, Long> getVClk() {
+	public HashMap<Long, Long> getVClk() {
 		return vClk;
 	}
 
-	public void setVClk(HashMap<Integer, Long> vClk) {
+	public void setVClk(HashMap<Long, Long> vClk) {
 		this.vClk = vClk;
 	}
 
-	public HashMap<Integer, int[]> getVNode() {
+	public HashMap<Long, int[]> getVNode() {
 		return vNode;
 	}
 
-	public void setVNode(HashMap<Integer, int[]> vNode) {
+	public void setVNode(HashMap<Long, int[]> vNode) {
 		this.vNode = vNode;
 	}
 }

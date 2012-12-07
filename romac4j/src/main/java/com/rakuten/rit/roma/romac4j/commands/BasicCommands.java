@@ -7,7 +7,6 @@ import java.util.Properties;
 
 import org.apache.log4j.Logger;
 
-import com.rakuten.rit.roma.romac4j.utils.PropertiesUtils;
 import com.rakuten.rit.roma.romac4j.utils.StringUtils;
 
 public class BasicCommands {

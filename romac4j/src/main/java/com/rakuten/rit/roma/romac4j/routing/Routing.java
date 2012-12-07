@@ -37,19 +37,17 @@ public class Routing {
 			str = StringUtils.readOneLine(is,
 					Integer.valueOf(props.getProperty("bufferSize")));
 		} catch (Exception e) {
-			e.printStackTrace();
 		}
 		return str;
 	}
 
 	public RoutingData getRoutingDump(Socket socket) throws Exception {
-		//HashMap<String, Object> routingDump = new HashMap<String, Object>();
 		RoutingData routingData = new RoutingData();
 		BufferedInputStream is = null;
 		PrintWriter writer = null;
 		String str = null;
+		byte[] b = new byte[Integer.valueOf(props.getProperty("bufferSize"))];
 		byte[] buff = null;
-		byte[] b = new byte[1];
 		int rtLen = 0;
 		int pos = 0;
 
@@ -60,8 +58,8 @@ public class Routing {
 		short rn = 0;
 		int numOfNodes = 0;
 		String[] nodeId = null;
-		HashMap<Integer, Long> vClk = new HashMap<Integer, Long>();
-		HashMap<Integer, int[]> vNode = new HashMap<Integer, int[]>();
+		HashMap<Long, Long> vClk = new HashMap<Long, Long>();
+		HashMap<Long, int[]> vNode = new HashMap<Long, int[]>();
 
 		try {
 			// Output stream open
@@ -82,12 +80,15 @@ public class Routing {
 			log.debug(rtLen);
 
 			// Initialize buffer
-			buff = new byte[rtLen];
+			buff = new byte[rtLen + 7];
 
 			// Read from stream
-			for (int i = 0; i < rtLen; i++) {
-				is.read(b, 0, 1);
-				buff[i] = b[0];
+			int receiveCount = 0;
+			int count = 0;
+			while (receiveCount <= rtLen - 1) {
+				count = is.read(b, 0, Integer.valueOf(props.getProperty("bufferSize")));
+				System.arraycopy(b, 0, buff, receiveCount, count);
+				receiveCount += count;
 			}
 
 			// # 2 bytes('RT'):magic code
@@ -144,17 +145,17 @@ public class Routing {
 			// map key=vnode val=[0]v_clk, [1..n]node_id
 			int[] tmpNodes = null;
 			for (int i=0; i < Math.pow(2, divBits); i++) {
-				//long vn = (long)i << (dgstBits - divBits);
+				long vn = (long)i << (dgstBits - divBits);
 				//log.debug("vn:" + vn);
-				long tmpClk = (buff[pos] << 24) & 0xff000000 |
-							(buff[pos + 1] << 16) & 0xff0000 |
-							(buff[pos + 2] << 8) & 0xff00 |
-							buff[pos + 3] & 0xff;
+				long tmpClk = (buff[pos] << 24) & 0xff000000L |
+							(buff[pos + 1] << 16) & 0xff0000L |
+							(buff[pos + 2] << 8) & 0xff00L |
+							buff[pos + 3] & 0xffL;
 				//log.debug("tmpClk:" + tmpClk);				
 				short tmpNumOfNodes = buff[pos + 4];
 				//log.debug("tmpNumOfNodes:" + tmpNumOfNodes);
 				pos += 5;
-				vClk.put(i, tmpClk);
+				vClk.put(vn, tmpClk);
 				tmpNodes = new int[rn];
 				for (int j=0; j < tmpNumOfNodes; j++) {
 					int tmpIdx = (buff[pos] << 8) & 0xff00 | buff[pos + 1] & 0xff;
@@ -162,33 +163,25 @@ public class Routing {
 					tmpNodes[j] = tmpIdx;
 					//log.debug("tmpIdx:" + tmpIdx);
 				}
-				vNode.put(i, tmpNodes);
+				vNode.put(vn, tmpNodes);
 			}
 
 
 			// Store to HashMap
-			//routingDump.put("formatVer", formatVer);
 			routingData.setFormatVer(formatVer);
-			//routingDump.put("dgstBits", dgstBits);
 			routingData.setDgstBits(dgstBits);
-			//routingDump.put("divBits", divBits);
 			routingData.setDivBits(divBits);
-			//routingDump.put("rn", rn);
 			routingData.setRn(rn);
-			//routingDump.put("numOfNodes", numOfNodes);
 			routingData.setNumOfNodes(numOfNodes);
-			//routingDump.put("nodeId", nodeId);
 			routingData.setNodeId(nodeId);
-			//routingDump.put("vClk", vClk);
 			routingData.setVClk(vClk);
-			//routingDump.put("vNode", vNode);
 			routingData.setVNode(vNode);
 
 			return routingData;
 
 		} catch (Exception e) {
 			//socket.close();
-			//e.printStackTrace();
+			e.printStackTrace();
 			throw new Exception("RoutingDump Exception.");
 		}		
 	}
