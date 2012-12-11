@@ -8,7 +8,7 @@ public class Start {
 		RomaClient rc = new RomaClient();
 		byte[] b = null;
 		long time0 = System.currentTimeMillis();
-		for (int i=0; i < 500000; i++) {
+		for (int i=0; i < 5000; i++) {
 			try {
 				b = rc.get("foo");
 				log.debug(new String(b));
@@ -18,7 +18,9 @@ public class Start {
 			Thread.sleep(1000);
 		}
 
+
 		time0 = System.currentTimeMillis() - time0;
 		log.debug("Elap Time: " + time0/1000.0);
+		rc.close();
     }
 }

@@ -17,28 +17,36 @@ public final class RoutingWatchingThread extends Thread {
 	private Properties props;
 	private String mklHash;
 	private RoutingData routingData;
+	private boolean status = false;
 
+	/**
+	 * 
+	 * @param routingData
+	 * @param mklHash
+	 * @param props
+	 */
 	public RoutingWatchingThread(RoutingData routingData, String mklHash, Properties props) {
 		this.routingData = routingData;
 		this.mklHash = mklHash;
 		this.props = props;
 	}
 
+	/**
+	 * 
+	 */
 	public void run() {
 		Random rnd = new Random(System.currentTimeMillis());
 		Routing routing = new Routing(props);
 		Socket socket = null;
 		String[] nodeId = null;
 		int rndVal = 0;
-		while (true) {
+		while (status == false) {
 			rndVal = rnd.nextInt(routingData.getNumOfNodes());
 			log.debug("rnd: " + rndVal);
 			nodeId = routingData.getNodeId();
 			socket = sps.getConnection(nodeId[rndVal]);
 			try {
 				String mklHash = routing.getMklHash(socket);
-				log.debug("mklHash1: " + this.mklHash);
-				log.debug("mklHash2: " + mklHash);
 				if (mklHash != null && !mklHash.equals(this.mklHash)) {
 					this.mklHash = mklHash;
 					RoutingData tempBuff = routing.getRoutingDump(socket);
@@ -61,6 +69,12 @@ public final class RoutingWatchingThread extends Thread {
 		}
 	}
 
+	/**
+	 * 
+	 * @param key
+	 * @return long vn
+	 * @throws NoSuchAlgorithmException
+	 */
 	public long getVn(String key)
 			throws NoSuchAlgorithmException {
 		int divBits = 0;
@@ -83,9 +97,21 @@ public final class RoutingWatchingThread extends Thread {
 		return h & mask;
 	}
 
+	/**
+	 * 
+	 * @return routingData
+	 */
 	public RoutingData getRoutingData() {
 		synchronized (routingData) {
 			return routingData;
 		}
+	}
+
+	/**
+	 * 
+	 * @param status
+	 */
+	public void setStatus(boolean status) {
+		this.status = status;
 	}
 }

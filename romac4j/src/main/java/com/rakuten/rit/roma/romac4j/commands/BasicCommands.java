@@ -7,46 +7,53 @@ import java.util.Properties;
 
 import org.apache.log4j.Logger;
 
+import com.rakuten.rit.roma.romac4j.utils.Constants;
 import com.rakuten.rit.roma.romac4j.utils.StringUtils;
 
 public class BasicCommands {
 	protected static Logger log = Logger.getLogger(BasicCommands.class.getName());
 
-	public static byte[] get(String key, Socket socket, Properties props) {
-		BufferedInputStream is = null;
-		PrintWriter writer = null;
-		String[] header = null;
-		String str = null;
-		byte[] buff = null;
-		int iVal = 0;
+	public byte[] get(String key, Socket socket, Properties props) {
+		byte[] result = null;
 		
 		try {
 			// Output stream open
-			writer = new PrintWriter(socket.getOutputStream(), true);
+			PrintWriter writer = new PrintWriter(socket.getOutputStream(),
+					true);
 
 			// Execute command
-			writer.write("get " + key + "\n");
+			writer.write("get " + key + Constants.CRLF);
 			writer.flush();
 
 			// Receive header part
-			is = new BufferedInputStream(socket.getInputStream());
-			str = StringUtils.readOneLine(is,
-					Integer.valueOf(props.getProperty("bufferSize")));
+			BufferedInputStream is = new BufferedInputStream(socket
+					.getInputStream());
+			String str = StringUtils.readOneLine(is, Integer.valueOf(props
+					.getProperty("bufferSize")));
 
 			// Analyze header part
-			header = str.split(" ");
+			String[] header = str.split(" ");
 			if (header.length == 4) {
-				iVal = Integer.valueOf(header[3]);
+				int iVal = Integer.valueOf(header[3]);
 
 				// Initialize buffer
-				buff = new byte[iVal];
+				byte[] b = new byte[Integer.valueOf(props.getProperty("bufferSize"))];
+				byte[] buff = new byte[iVal + Constants.CRLF_LEN];
+				result = new byte[iVal];
 
 				// Read from stream
-				is.read(buff, 0, iVal);
+				int receiveCount = 0;
+				int count = 0;
+				while (receiveCount < iVal + Constants.CRLF_LEN) {
+					count = is.read(b, 0, Integer.valueOf(props.getProperty("bufferSize")));
+					System.arraycopy(b, 0, buff, receiveCount, count);
+					receiveCount += count;
+				}
+				System.arraycopy(buff, 0, result, 0, iVal);
 			}
 		} catch (Exception e) {
 			log.error("Get failed.");
 		}
-		return buff;
+		return result;
 	}
 }
