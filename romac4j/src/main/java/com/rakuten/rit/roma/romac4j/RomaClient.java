@@ -1,5 +1,6 @@
 package com.rakuten.rit.roma.romac4j;
 
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Properties;
 
@@ -11,6 +12,7 @@ import com.rakuten.rit.roma.romac4j.pool.SocketPoolSingleton;
 import com.rakuten.rit.roma.romac4j.routing.Routing;
 import com.rakuten.rit.roma.romac4j.routing.RoutingData;
 import com.rakuten.rit.roma.romac4j.routing.RoutingWatchingThread;
+import com.rakuten.rit.roma.romac4j.utils.Constants;
 import com.rakuten.rit.roma.romac4j.utils.PropertiesUtils;
 
 public class RomaClient {
@@ -60,7 +62,73 @@ public class RomaClient {
 	public void close() {
 		rwt.setStatus(true);
 	}
+	
+	public void sendCmd(String cmd, String ket){
+		sendCmd(cmd, ket, null);
+	}
 
+	protected PrintWriter sendCmd(String cmd, String key, String opt){
+		Context ctx = getPrimary();
+		return sendCmd(ctx, cmd, key, opt);
+	}
+
+	protected PrintWriter sendCmd(Context ctx,String cmd, String key, String opt){
+		PrintWriter writer = getWriter();
+		try{
+			writer.write(cmd + " " + key + " " + opt + Constants.CRLF);
+			writer.flush();
+		}catch(TimeOutException e){
+			if(ctx.retry > 5){
+				throw new Exception();
+			}else{
+				ctx = getNext();
+				ctx.retry ++;
+				sendCmd(ctx, cmd, key, opt);
+			}
+		}
+		return writer;
+	}
+
+	protected String getResult(PrintWriter ctx){
+		
+		// readLine ‚ÌŽÀ‘•
+		
+		return null;
+	}
+
+	protected byte[] getValue(PrintWriter ctx){
+		ValueRes vr = getValueRes(ctx);
+		
+		// 
+		
+		return null;
+	}
+	
+	public boolean set(String key, byte[] value, int expt){
+		
+		String res = getResult(sendCmd("set ", key, "0 0 " + value.length));
+	
+		return true;
+	}
+	
+	public boolean delete(String key){
+		return getResult(sendCmd("delete ", key));
+	}
+	
+	public boolean cas(String key){
+		
+		sendCmd("cas ", key);
+		String res = getResult();
+	
+		return true;
+	}
+	
+	public byte[] get2(String key) {
+		
+		byte[] value = getValue(sendCmd("get ", key));
+		
+		return null;
+	}
 	/**
 	 * Get Command
 	 * 
