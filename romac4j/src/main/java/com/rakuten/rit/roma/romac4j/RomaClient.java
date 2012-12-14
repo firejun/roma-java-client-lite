@@ -106,22 +106,22 @@ public class RomaClient {
 
     public boolean replace(String key, byte[] value, int expt) {
         // TODO:expt????
-        Receiver rcv = sendCmd(new StringReceiver(), "replace", key, value, "0 0 "
-                + value.length);
+        Receiver rcv = sendCmd(new StringReceiver(), "replace", key, value,
+                "0 0 " + value.length);
         return rcv.toString().equals("STORED");
     }
 
     public boolean append(String key, byte[] value, int expt) {
         // TODO:expt????
-        Receiver rcv = sendCmd(new StringReceiver(), "append", key, value, "0 0 "
-                + value.length);
+        Receiver rcv = sendCmd(new StringReceiver(), "append", key, value,
+                "0 0 " + value.length);
         return rcv.toString().equals("STORED");
     }
 
     public boolean prepend(String key, byte[] value, int expt) {
         // TODO:expt????
-        Receiver rcv = sendCmd(new StringReceiver(), "prepend", key, value, "0 0 "
-                + value.length);
+        Receiver rcv = sendCmd(new StringReceiver(), "prepend", key, value,
+                "0 0 " + value.length);
         return rcv.toString().equals("STORED");
     }
 
@@ -174,26 +174,25 @@ public class RomaClient {
 
     public byte[] alistDeleteAt(String key, int index) {
         // TODO:index??
-        Receiver rcv = sendCmd(new StringReceiver(), "alist_delete_at", key, index);
+        Receiver rcv = sendCmd(new StringReceiver(), "alist_delete_at", key,
+                index);
         return rcv.toString().equals("DELETED");
     }
 
-
-
-//    public byte[] get(String key) {
-//        byte[] result = null;
-//
-//        try {
-//            String[] nodeId = rwt.getRoutingData().getNodeId();
-//            long vn = rwt.getVn(key);
-//            int[] arrVn = rwt.getRoutingData().getVNode().get(vn);
-//            log.debug("vn: " + vn + " nodeId: " + nodeId[arrVn[0]]);
-//            Socket socket = sps.getConnection(nodeId[arrVn[0]]);
-//            result = basicCommands.get(key, socket, props);
-//            sps.returnConnection(nodeId[arrVn[0]], socket);
-//        } catch (Exception e) {
-//            log.error("Get failed.");
-//        }
-//        return result;
-//    }
+    // public byte[] get(String key) {
+    // byte[] result = null;
+    //
+    // try {
+    // String[] nodeId = rwt.getRoutingData().getNodeId();
+    // long vn = rwt.getVn(key);
+    // int[] arrVn = rwt.getRoutingData().getVNode().get(vn);
+    // log.debug("vn: " + vn + " nodeId: " + nodeId[arrVn[0]]);
+    // Socket socket = sps.getConnection(nodeId[arrVn[0]]);
+    // result = basicCommands.get(key, socket, props);
+    // sps.returnConnection(nodeId[arrVn[0]], socket);
+    // } catch (Exception e) {
+    // log.error("Get failed.");
+    // }
+    // return result;
+    // }
 }
