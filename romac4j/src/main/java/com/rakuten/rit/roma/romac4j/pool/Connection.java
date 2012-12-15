@@ -6,7 +6,7 @@ import java.util.concurrent.TimeoutException;
 public class Connection extends Socket {
     String nodeId;
     
-    public void write(String cmd, String key, String opt, byte[] value) throws TimeoutException{
+    public void write(String cmd, String key, String opt, byte[] value, int casid) throws TimeoutException{
         // TODO
     }
 }
