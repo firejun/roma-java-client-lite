@@ -8,6 +8,7 @@ import java.util.Properties;
 
 import org.apache.log4j.Logger;
 
+import com.rakuten.rit.roma.romac4j.pool.Connection;
 import com.rakuten.rit.roma.romac4j.utils.Constants;
 import com.rakuten.rit.roma.romac4j.utils.StringUtils;
 
@@ -172,5 +173,17 @@ public class Routing {
 			throw new Exception("RoutingDump Exception.");
 		}		
 	}
+	
+	public Connection getConnection(String key){
+	    // TODO
+	    return null;
+	}
 
+	public void returnConnection(Connection con){
+	    // TODO
+	}
+	
+	public void failCount(){
+	    // TODO
+	}
 }
