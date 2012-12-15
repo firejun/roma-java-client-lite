@@ -3,11 +3,13 @@ package com.rakuten.rit.roma.romac4j;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Properties;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
 import com.rakuten.rit.roma.romac4j.commands.BasicCommands;
+import com.rakuten.rit.roma.romac4j.pool.Connection;
 import com.rakuten.rit.roma.romac4j.pool.SocketPoolSingleton;
 import com.rakuten.rit.roma.romac4j.routing.Routing;
 import com.rakuten.rit.roma.romac4j.routing.RoutingData;
@@ -22,6 +24,8 @@ public class RomaClient {
     private SocketPoolSingleton sps = SocketPoolSingleton.getInstance();
     private RoutingWatchingThread rwt;
     private BasicCommands basicCommands = new BasicCommands();
+    
+    private Routing routing;
 
     public RomaClient() {
         BasicConfigurator.configure();
@@ -64,7 +68,7 @@ public class RomaClient {
     }
 
     protected Receiver sendCmd(Receiver rcv, String cmd, String key,
-            String opt, byte[] value) {
+            String opt, byte[] value) throws RetryOutException {
         boolean retry;
         do {
             retry = false;
@@ -73,11 +77,11 @@ public class RomaClient {
                 con.write(cmd, key, opt, value);
                 rcv.receive(con);
                 routing.returnConnection(con);
-            } catch (TimeOutException e) {
+            } catch (TimeoutException e) {
                 retry = true;
                 routing.failCount();
                 if (rcv.retry++ > 5) {
-                    throw new Exception();
+                    throw new RetryOutException();
                 }
             }
         } while (retry);
@@ -85,74 +89,63 @@ public class RomaClient {
         return rcv;
     }
 
-    public byte[] get(String key) {
-        Receiver rcv = sendCmd(new ValueReceiver(), "get", key);
-        return ((ValueReceiver) rcv).value;
+    public byte[] get(String key) throws RetryOutException {
+        Receiver rcv = sendCmd(new ValueReceiver(), "get", key, null, null);
+        return ((ValueReceiver) rcv).getValue();
     }
 
-    public boolean set(String key, byte[] value, int expt) {
-        // TODO:expt????
-        Receiver rcv = sendCmd(new StringReceiver(), "set", key, value, "0 0 "
-                + value.length);
+    private boolean set(String cmd, String key, byte[] value, int expt) throws RetryOutException{
+        Receiver rcv = sendCmd(new StringReceiver(), cmd, key,
+                "0  " + expt + " " + value.length, value);
+        return rcv.toString().equals("STORED");        
+    }
+    
+    public boolean set(String key, byte[] value, int expt) throws RetryOutException {
+        return set("set", key, value, expt);
+    }
+
+    public boolean add(String key, byte[] value, int expt) throws RetryOutException {
+        return set("add", key, value, expt);
+    }
+
+    public boolean replace(String key, byte[] value, int expt) throws RetryOutException {
+        return set("replace", key, value, expt);
+    }
+
+    public boolean append(String key, byte[] value, int expt) throws RetryOutException {
+        return set("append", key, value, expt);
+    }
+
+    public boolean prepend(String key, byte[] value, int expt) throws RetryOutException {
+        return set("prepend", key, value, expt);
+    }
+
+    public boolean incr(String key, int value) throws RetryOutException {
+        Receiver rcv = sendCmd(new StringReceiver(), "incr", key, "" + value, null);
         return rcv.toString().equals("STORED");
     }
 
-    public boolean add(String key, byte[] value, int expt) {
-        // TODO:expt????
-        Receiver rcv = sendCmd(new StringReceiver(), "add", key, value, "0 0 "
-                + value.length);
+    public boolean decr(String key, int value) throws RetryOutException {
+        Receiver rcv = sendCmd(new StringReceiver(), "decr", key, "" + value, null);
         return rcv.toString().equals("STORED");
     }
 
-    public boolean replace(String key, byte[] value, int expt) {
-        // TODO:expt????
-        Receiver rcv = sendCmd(new StringReceiver(), "replace", key, value,
-                "0 0 " + value.length);
-        return rcv.toString().equals("STORED");
-    }
-
-    public boolean append(String key, byte[] value, int expt) {
-        // TODO:expt????
-        Receiver rcv = sendCmd(new StringReceiver(), "append", key, value,
-                "0 0 " + value.length);
-        return rcv.toString().equals("STORED");
-    }
-
-    public boolean prepend(String key, byte[] value, int expt) {
-        // TODO:expt????
-        Receiver rcv = sendCmd(new StringReceiver(), "prepend", key, value,
-                "0 0 " + value.length);
-        return rcv.toString().equals("STORED");
-    }
-
-    public boolean incr(String key, byte[] value) {
-        // TODO:byte[] OK?
-        Receiver rcv = sendCmd(new StringReceiver(), "incr", key, value);
-        return rcv.toString().equals("STORED");
-    }
-
-    public boolean decr(String key, byte[] value) {
-        // TODO:byte[] OK?
-        Receiver rcv = sendCmd(new StringReceiver(), "decr", key, value);
-        return rcv.toString().equals("STORED");
-    }
-
-    public boolean delete(String key) {
-        Receiver rcv = sendCmd(new StringReceiver(), "delete", key);
+    public boolean delete(String key) throws RetryOutException {
+        Receiver rcv = sendCmd(new StringReceiver(), "delete", key, null, null);
         return rcv.toString().equals("DELETED");
     }
 
-    public boolean setExpt(String key, int expt) {
-        // TODO:expt?
-        Receiver rcv = sendCmd(new StringReceiver(), "set_expt", key, expt);
+    public boolean setExpt(String key, int expt) throws RetryOutException {
+        Receiver rcv = sendCmd(new StringReceiver(), "set_expt", key, "" + expt, null);
         return rcv.toString().equals("STORED");
     }
 
     public boolean cas(String key) {
         // TODO:cas-id? gets?
+        /*
         sendCmd("cas", key);
         String res = getResult();
-
+        */
         return true;
     }
 
