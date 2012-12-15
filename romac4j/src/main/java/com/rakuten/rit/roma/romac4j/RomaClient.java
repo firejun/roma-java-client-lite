@@ -69,12 +69,17 @@ public class RomaClient {
 
     protected Receiver sendCmd(Receiver rcv, String cmd, String key,
             String opt, byte[] value) throws RetryOutException {
+        return sendCmd(rcv, cmd, key, opt, value, -1);
+    }
+    
+    protected Receiver sendCmd(Receiver rcv, String cmd, String key,
+            String opt, byte[] value, int casid) throws RetryOutException {
         boolean retry;
         do {
             retry = false;
             Connection con = routing.getConnection(key);
             try {
-                con.write(cmd, key, opt, value);
+                con.write(cmd, key, opt, value, casid);
                 rcv.receive(con);
                 routing.returnConnection(con);
             } catch (TimeoutException e) {
@@ -140,13 +145,12 @@ public class RomaClient {
         return rcv.toString().equals("STORED");
     }
 
-    public boolean cas(String key) {
-        // TODO:cas-id? gets?
-        /*
-        sendCmd("cas", key);
-        String res = getResult();
-        */
-        return true;
+    public boolean cas(String key, Cas callback) throws RetryOutException {
+        Receiver rcv = sendCmd(new ValueReceiver(), "get", key, null, null);
+        byte[] value = callback.cas((ValueReceiver)rcv);
+        
+        Receiver rcv2 = sendCmd(new StringReceiver(), "cas", key, null, value);
+        return rcv2.toString().equals("STORED");
     }
 
     public byte[] alistAt(String key, int index) {

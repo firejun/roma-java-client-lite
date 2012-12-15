@@ -17,4 +17,9 @@ public class ValueReceiver extends Receiver {
         return null;
     }
     
+    int getCasid(){
+        // TODO
+        return -1;
+    }
+    
 }
