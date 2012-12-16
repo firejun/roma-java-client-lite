@@ -153,29 +153,6 @@ public class RomaClient {
         return rcv2.toString().equals("STORED");
     }
 
-    public byte[] alistAt(String key, int index) {
-        // TODO:index??
-        Receiver rcv = sendCmd(new StringReceiver(), "alist_at", key, index);
-        return ((ValueReceiver) rcv).value;
-    }
-
-    public boolean alistClear(String key) {
-        Receiver rcv = sendCmd(new StringReceiver(), "alist_clear", key);
-        return rcv.toString().equals("CLEARED");
-    }
-
-    public boolean alistDelete(String key, byte[] value) {
-        Receiver rcv = sendCmd(new StringReceiver(), "alist_delete", key, value);
-        return rcv.toString().equals("DELETED");
-    }
-
-    public byte[] alistDeleteAt(String key, int index) {
-        // TODO:index??
-        Receiver rcv = sendCmd(new StringReceiver(), "alist_delete_at", key,
-                index);
-        return rcv.toString().equals("DELETED");
-    }
-
     // public byte[] get(String key) {
     // byte[] result = null;
     //
