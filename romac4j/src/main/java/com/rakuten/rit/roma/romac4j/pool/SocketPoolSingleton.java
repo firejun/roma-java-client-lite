@@ -20,13 +20,13 @@ public class SocketPoolSingleton {
 	}
 
 	private GenericObjectPool.Config config;
-	private HashMap<String, GenericObjectPool<Socket>> poolMap;
+	private HashMap<String, GenericObjectPool<Connection>> poolMap;
 	private int numOfConnection;
 	private int timeout;
 	private int expTimeout;
 
 	public void setEnv(int maxActive, int maxIdle, int timeout, int expTimeout ,int numOfConnection){
-		poolMap = new HashMap<String, GenericObjectPool<Socket>>();
+		poolMap = new HashMap<String, GenericObjectPool<Connection>>();
 		config = new GenericObjectPool.Config();
 		config.maxActive = maxActive;
 		config.maxIdle = maxIdle;
@@ -36,13 +36,13 @@ public class SocketPoolSingleton {
 		this.expTimeout = expTimeout;
 	}
 
-	public synchronized Socket getConnection(String nodeId) {
-		GenericObjectPool<Socket> pool = null;
-		Socket socket = null;
+	public synchronized Connection getConnection(String nodeId) {
+		GenericObjectPool<Connection> pool = null;
+		Connection con = null;
 //		byte[] b = new byte[1];
 		String[] host = nodeId.split("_");
 		if (poolMap != null && poolMap.containsKey(nodeId)) {
-//			socket = new Socket();
+//			con = new Connection();
 //			try {
 //				socket.connect(new InetSocketAddress(host[0], Integer.valueOf(host[1])));
 //				BufferedInputStream is = new BufferedInputStream(socket.getInputStream());
@@ -55,9 +55,9 @@ public class SocketPoolSingleton {
 			pool = poolMap.get(nodeId);
 		} else {
 //			String[] host = nodeId.split("_");
-			PoolableObjectFactory<Socket> factory =
+			PoolableObjectFactory<Connection> factory =
 				new SocketPoolFactory(host[0], Integer.valueOf(host[1]));
-			pool = new GenericObjectPool<Socket>(factory, config);
+			pool = new GenericObjectPool<Connection>(factory, config);
 			//pool.setTestOnBorrow(true);
 //			try {
 //				for (int i=0; i < numOfConnection;i++) {
@@ -94,13 +94,13 @@ public class SocketPoolSingleton {
 //
 //	}
 
-	public synchronized void returnConnection(String nodeId, Socket socket) {
-		GenericObjectPool<Socket> pool = null;
-		if (poolMap.containsKey(nodeId)) {
-			pool = poolMap.get(nodeId);
+	public synchronized void returnConnection(Connection con) {
+		GenericObjectPool<Connection> pool = null;
+		if (poolMap.containsKey(con.getNodeId())) {
+			pool = poolMap.get(con.getNodeId());
 			try {
-				socket.setSoTimeout(expTimeout);
-				pool.returnObject(socket);
+				con.setSoTimeout(expTimeout);
+				pool.returnObject(con);
 				poolMap.put(nodeId, pool);
 			} catch (Exception e) {
 				System.out.println("Can't return the Socket.");

@@ -24,7 +24,7 @@ public class RomaClient {
     private SocketPoolSingleton sps = SocketPoolSingleton.getInstance();
     private Routing routing;
     //private GetRouting routing;
-    private BasicCommands basicCommands = new BasicCommands();
+    //private BasicCommands basicCommands = new BasicCommands();
 
     private int maxRetry = 5;
     
@@ -37,14 +37,14 @@ public class RomaClient {
             props = pu.getRomaClientProperties();
             setEnv();
 
-            Socket socket = sps
-                    .getConnection(props.getProperty("address_port"));
-            GetRouting getRouting = new GetRouting(props);
-            String mklHash = getRouting.getMklHash(socket);
-            RoutingData routingData = getRouting.getRoutingDump(socket);
-            log.debug("Init mklHash: " + mklHash);
-            sps.returnConnection(props.getProperty("address_port"), socket);
-            routing = new Routing(routingData, mklHash, props);
+            //Socket socket = sps
+            //        .getConnection(props.getProperty("address_port"));
+            //GetRouting getRouting = new GetRouting(props);
+            //String mklHash = getRouting.getMklHash(socket);
+            //RoutingData routingData = getRouting.getRoutingDump(socket);
+            //log.debug("Init mklHash: " + mklHash);
+            //sps.returnConnection(props.getProperty("address_port"), socket);
+            routing = new Routing(props);
             routing.start();
 
         } catch (Exception e) {
@@ -64,7 +64,7 @@ public class RomaClient {
         props.setProperty("timeout", String.valueOf(timeout));
     }
 
-    public void close() {
+    public void destroy() {
         routing.setStatus(true);
     }
 
@@ -85,7 +85,7 @@ public class RomaClient {
                 routing.returnConnection(con);
             } catch (TimeoutException e) {
                 retry = true;
-                routing.failCount();
+                routing.failCount(con);
                 if (rcv.retry++ > 5) {
                     throw new RetryOutException();
                 }

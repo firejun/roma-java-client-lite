@@ -1,5 +1,7 @@
 package com.rakuten.rit.roma.romac4j.routing;
 
+import java.io.BufferedInputStream;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -10,6 +12,8 @@ import org.apache.log4j.Logger;
 
 import com.rakuten.rit.roma.romac4j.pool.Connection;
 import com.rakuten.rit.roma.romac4j.pool.SocketPoolSingleton;
+import com.rakuten.rit.roma.romac4j.utils.Constants;
+import com.rakuten.rit.roma.romac4j.utils.StringUtils;
 
 public final class Routing extends Thread {
     protected static Logger log = Logger.getLogger(Routing.class.getName());
@@ -21,13 +25,9 @@ public final class Routing extends Thread {
 
     /**
      * 
-     * @param routingData
-     * @param mklHash
      * @param props
      */
-    public Routing(RoutingData routingData, String mklHash, Properties props) {
-        this.routingData = routingData;
-        this.mklHash = mklHash;
+    public Routing(Properties props) {
         this.props = props;
     }
 
@@ -126,7 +126,8 @@ public final class Routing extends Thread {
                 vNode = routingData.getVNode().get(vn);
             }
             con.setNodeId(nodeId[vNode[0]]);
-            con.setSocket(sps.getConnection(nodeId[0]));
+            //con.setSocket(sps.getConnection(nodeId[0]));
+            con = sps.getConnection(nodeId[0]);
         } catch (NoSuchAlgorithmException ex) {
             // TODO: Exception throw??
         }
@@ -136,10 +137,35 @@ public final class Routing extends Thread {
 
     public void returnConnection(Connection con) {
         // TODO
-        sps.returnConnection(con.getNodeId(), con.getSocket());
+        sps.returnConnection(con);
     }
 
-    public void failCount() {
+    public void failCount(Connection con) {
         // TODO
+        
     }
+
+    private String getMklHash(Socket socket) {
+        PrintWriter writer = null;
+        BufferedInputStream is = null;
+        String str = null;
+        try {
+            // Output stream open
+            writer = new PrintWriter(socket.getOutputStream(), true);
+
+            // Execute command
+            writer.write("mklhash 0" + Constants.CRLF);
+            writer.flush();
+
+            // Receive header part
+            is = new BufferedInputStream(socket.getInputStream());
+
+            // # Length
+            str = StringUtils.readOneLine(is,
+                    Integer.valueOf(props.getProperty("bufferSize")));
+        } catch (Exception e) {
+        }
+        return str;
+    }
+
 }
