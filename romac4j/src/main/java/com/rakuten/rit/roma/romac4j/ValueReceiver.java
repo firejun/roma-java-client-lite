@@ -5,7 +5,8 @@ import java.util.concurrent.TimeoutException;
 import com.rakuten.rit.roma.romac4j.pool.Connection;
 
 public class ValueReceiver extends Receiver {
-
+    byte[] value;
+    
     @Override
     void receive(Connection con) throws TimeoutException {
         // TODO Auto-generated method stub
@@ -14,7 +15,7 @@ public class ValueReceiver extends Receiver {
 
     byte[] getValue(){
         // TODO
-        return null;
+        return value;
     }
     
     int getCasid(){

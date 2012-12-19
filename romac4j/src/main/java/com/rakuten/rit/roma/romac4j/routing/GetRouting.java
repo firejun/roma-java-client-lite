@@ -76,6 +76,15 @@ public class GetRouting {
 				receiveCount += count;
 			}
 
+			ByteData bd;
+			bd.receive(con, len);
+			
+			if(bd.getString(2).equals("RT"){
+			}
+			ver = bd.getInt(2);
+			dgstBits = db.getInt(1);
+			
+			
 			// # 2 bytes('RT'):magic code
 			int pos = 0;
 			str = new String(new byte[]{buff[pos], buff[pos + 1]});

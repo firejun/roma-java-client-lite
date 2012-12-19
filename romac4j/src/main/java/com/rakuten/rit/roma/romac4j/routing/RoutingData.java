@@ -12,7 +12,15 @@ public class RoutingData {
 	private HashMap<Long, Long> vClk = null;
 	private HashMap<Long, int[]> vNode = null;
 
-	public RoutingData() {
+	static public RoutingData(Connection con){
+	    return null;
+	}
+	
+	public RoutingData failover(){
+	    return null;
+	}
+	
+	private RoutingData() {
 	}
 
 	public int getFormatVer() {

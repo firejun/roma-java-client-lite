@@ -26,6 +26,8 @@ public class RomaClient {
     //private GetRouting routing;
     private BasicCommands basicCommands = new BasicCommands();
 
+    private int maxRetry = 5;
+    
     public RomaClient() {
         BasicConfigurator.configure();
         log.debug("Init Section.");
@@ -100,7 +102,7 @@ public class RomaClient {
 
     private boolean set(String cmd, String key, byte[] value, int expt) throws RetryOutException{
         Receiver rcv = sendCmd(new StringReceiver(), cmd, key,
-                "0  " + expt + " " + value.length, value);
+                "0 " + expt + " " + value.length, value);
         return rcv.toString().equals("STORED");        
     }
     
@@ -145,12 +147,22 @@ public class RomaClient {
     }
 
     public boolean cas(String key, Cas callback) throws RetryOutException {
-        Receiver rcv = sendCmd(new ValueReceiver(), "get", key, null, null);
+        Receiver rcv = sendCmd(new ValueReceiver(), "gets", key, null, null);
         byte[] value = callback.cas((ValueReceiver)rcv);
         
-        Receiver rcv2 = sendCmd(new StringReceiver(), "cas", key, null, value);
+        Receiver rcv2 = sendCmd(new StringReceiver(), "cas", key, null, value, ((ValueReceiver)rcv).getCasid());
         return rcv2.toString().equals("STORED");
     }
+    
+    /*
+     * res = rv.cas("key", new Cas(arg){
+     *   cas(ValueReceiver rcv){
+     *   
+     *      return value;
+     *   }
+     *   };
+     *   );
+     */
 
     // public byte[] get(String key) {
     // byte[] result = null;

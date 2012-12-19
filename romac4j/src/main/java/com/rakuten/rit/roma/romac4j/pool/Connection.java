@@ -10,6 +10,11 @@ public class Connection extends Socket {
     
     public void write(String cmd, String key, String opt, byte[] value, int casid) throws TimeoutException{
         // TODO
+        cmd + " " + key;
+        cmd + " " + key + " " + opt;
+        cmd + " " + key + " " + opt + " " + value.length;
+        cmd + " " + key + " " + opt + " " + value.length + " " + casid;
+        
     }
 
     public String getNodeId() {
