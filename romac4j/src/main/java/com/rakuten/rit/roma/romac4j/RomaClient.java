@@ -11,9 +11,9 @@ import org.apache.log4j.Logger;
 import com.rakuten.rit.roma.romac4j.commands.BasicCommands;
 import com.rakuten.rit.roma.romac4j.pool.Connection;
 import com.rakuten.rit.roma.romac4j.pool.SocketPoolSingleton;
-import com.rakuten.rit.roma.romac4j.routing.Routing;
+import com.rakuten.rit.roma.romac4j.routing.GetRouting;
 import com.rakuten.rit.roma.romac4j.routing.RoutingData;
-import com.rakuten.rit.roma.romac4j.routing.RoutingWatchingThread;
+import com.rakuten.rit.roma.romac4j.routing.Routing;
 import com.rakuten.rit.roma.romac4j.utils.Constants;
 import com.rakuten.rit.roma.romac4j.utils.PropertiesUtils;
 
@@ -22,10 +22,9 @@ public class RomaClient {
     private PropertiesUtils pu = new PropertiesUtils();
     private Properties props;
     private SocketPoolSingleton sps = SocketPoolSingleton.getInstance();
-    private RoutingWatchingThread rwt;
-    private BasicCommands basicCommands = new BasicCommands();
-    
     private Routing routing;
+    //private GetRouting routing;
+    private BasicCommands basicCommands = new BasicCommands();
 
     public RomaClient() {
         BasicConfigurator.configure();
@@ -38,13 +37,13 @@ public class RomaClient {
 
             Socket socket = sps
                     .getConnection(props.getProperty("address_port"));
-            Routing routing = new Routing(props);
-            String mklHash = routing.getMklHash(socket);
-            RoutingData routingData = routing.getRoutingDump(socket);
+            GetRouting getRouting = new GetRouting(props);
+            String mklHash = getRouting.getMklHash(socket);
+            RoutingData routingData = getRouting.getRoutingDump(socket);
             log.debug("Init mklHash: " + mklHash);
             sps.returnConnection(props.getProperty("address_port"), socket);
-            rwt = new RoutingWatchingThread(routingData, mklHash, props);
-            rwt.start();
+            routing = new Routing(routingData, mklHash, props);
+            routing.start();
 
         } catch (Exception e) {
             log.error("Main Error.");
@@ -64,7 +63,7 @@ public class RomaClient {
     }
 
     public void close() {
-        rwt.setStatus(true);
+        routing.setStatus(true);
     }
 
     protected Receiver sendCmd(Receiver rcv, String cmd, String key,
