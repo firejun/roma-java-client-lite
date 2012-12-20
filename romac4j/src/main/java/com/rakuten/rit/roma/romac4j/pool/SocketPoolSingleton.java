@@ -51,6 +51,7 @@ public class SocketPoolSingleton {
         }
         try {
             con = pool.borrowObject();
+            con.setNodeId(nodeId);
             con.setSoTimeout(timeout);
         } catch (Exception e) {
             try {

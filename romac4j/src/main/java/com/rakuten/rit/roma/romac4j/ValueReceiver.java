@@ -8,17 +8,17 @@ public class ValueReceiver extends Receiver {
     byte[] value;
     
     @Override
-    void receive(Connection con) throws TimeoutException {
+    public void receive(Connection con) throws TimeoutException {
         // TODO Auto-generated method stub
 
     }
 
-    byte[] getValue(){
+    public byte[] getValue(){
         // TODO
         return value;
     }
     
-    int getCasid(){
+    public int getCasid(){
         // TODO
         return -1;
     }

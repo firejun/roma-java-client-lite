@@ -44,11 +44,12 @@ public class Connection extends Socket {
         try {
             writer = new PrintWriter(getOutputStream(), true);
 
-            writer.write(sendStr + new String(new byte[] { 0x0a, 0x0d }));
+            writer.write(sendStr + "\r\n");
             writer.flush();
 
             is = new BufferedInputStream(getInputStream());
             while (true) {
+                // const...
                 if (i > 1024) {
                     throw new ArrayIndexOutOfBoundsException("Too much size.");
                 }

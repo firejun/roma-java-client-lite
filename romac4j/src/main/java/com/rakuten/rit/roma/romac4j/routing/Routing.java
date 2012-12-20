@@ -1,15 +1,21 @@
 package com.rakuten.rit.roma.romac4j.routing;
 
+import java.io.BufferedInputStream;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Properties;
 import java.util.Random;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;
 
+import com.rakuten.rit.roma.romac4j.Receiver;
+import com.rakuten.rit.roma.romac4j.StringReceiver;
 import com.rakuten.rit.roma.romac4j.pool.Connection;
 import com.rakuten.rit.roma.romac4j.pool.SocketPoolSingleton;
+import com.rakuten.rit.roma.romac4j.utils.StringUtils;
 
 public final class Routing extends Thread {
     protected static Logger log = Logger.getLogger(Routing.class.getName());
@@ -17,6 +23,8 @@ public final class Routing extends Thread {
     private Properties props;
     private String mklHash;
     private RoutingData routingData;
+    private Random rnd = new Random(System.currentTimeMillis());
+    private int rndVal;
     private boolean status = false;
 
     /**
@@ -31,21 +39,21 @@ public final class Routing extends Thread {
 	 * 
 	 */
     public void run() {
-        Random rnd = new Random(System.currentTimeMillis());
-        GetRouting routing = new GetRouting(props);
-        Socket socket = null;
-        String[] nodeId = null;
-        int rndVal = 0;
+        
+        //GetRouting routing = new GetRouting(props);
+        //Socket socket = null;
+        //String[] nodeId = null;
+        //int rndVal = 0;
         while (status == false) {
             rndVal = rnd.nextInt(routingData.getNumOfNodes());
             log.debug("rnd: " + rndVal);
-            nodeId = routingData.getNodeId();
+            //nodeId = routingData.getNodeId();
             //socket = sps.getConnection(nodeId[rndVal]);
             try {
                 String mklHash = getMklHash();
                 if (mklHash != null && !mklHash.equals(this.mklHash)) {
                     this.mklHash = mklHash;
-                    RoutingData tempBuff = routing.getRoutingDump(socket);
+                    RoutingData tempBuff = getRoutingDump();
                     synchronized (routingData) {
                         routingData = tempBuff;
                     }
@@ -110,6 +118,21 @@ public final class Routing extends Thread {
         this.status = status;
     }
 
+    public Connection getConnection() {
+        Connection con = null;
+        String[] nodeId = null;
+        rndVal = rnd.nextInt(routingData.getNumOfNodes());
+        try {
+            synchronized (routingData) {
+                nodeId = routingData.getNodeId();
+            }
+            con = sps.getConnection(nodeId[rndVal]);
+        } catch (Exception ex) {
+            // TODO: Exception throw??
+        }
+        return con;
+    }
+
     public Connection getConnection(String key) {
         // TODO
         Connection con = null;
@@ -141,7 +164,16 @@ public final class Routing extends Thread {
     }
 
     private String getMklHash() {
-        return null;
+        Connection con = null;
+        Receiver rcv = new StringReceiver();
+        try {
+            con = getConnection();
+            con.write("mklhash 0", null, null, null, -1);
+            rcv.receive(con);
+            returnConnection(con);
+        } catch (TimeoutException e) {
+        }
+        return rcv.toString();
     }
 
     private RoutingData getRoutingDump() {

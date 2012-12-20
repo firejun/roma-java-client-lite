@@ -19,27 +19,9 @@ public class GetRouting {
         this.props = props;
     }
 
+    @Deprecated
     public String getMklHash(Socket socket) {
-        PrintWriter writer = null;
-        BufferedInputStream is = null;
-        String str = null;
-        try {
-            // Output stream open
-            writer = new PrintWriter(socket.getOutputStream(), true);
-
-            // Execute command
-            writer.write("mklhash 0" + new String(new byte[] { 0x0a, 0x0d }));
-            writer.flush();
-
-            // Receive header part
-            is = new BufferedInputStream(socket.getInputStream());
-
-            // # Length
-            str = StringUtils.readOneLine(is,
-                    Integer.valueOf(props.getProperty("bufferSize")));
-        } catch (Exception e) {
-        }
-        return str;
+        return null;
     }
 
     public RoutingData getRoutingDump(Socket socket) throws Exception {
