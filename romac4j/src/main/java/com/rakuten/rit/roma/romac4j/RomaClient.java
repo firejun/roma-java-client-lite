@@ -1,20 +1,14 @@
 package com.rakuten.rit.roma.romac4j;
 
-import java.io.PrintWriter;
-import java.net.Socket;
 import java.util.Properties;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
-import com.rakuten.rit.roma.romac4j.commands.BasicCommands;
 import com.rakuten.rit.roma.romac4j.pool.Connection;
 import com.rakuten.rit.roma.romac4j.pool.SocketPoolSingleton;
-import com.rakuten.rit.roma.romac4j.routing.GetRouting;
-import com.rakuten.rit.roma.romac4j.routing.RoutingData;
 import com.rakuten.rit.roma.romac4j.routing.Routing;
-import com.rakuten.rit.roma.romac4j.utils.Constants;
 import com.rakuten.rit.roma.romac4j.utils.PropertiesUtils;
 
 public class RomaClient {
@@ -86,7 +80,7 @@ public class RomaClient {
             } catch (TimeoutException e) {
                 retry = true;
                 routing.failCount(con);
-                if (rcv.retry++ > 5) {
+                if (rcv.retry++ > maxRetry) {
                     throw new RetryOutException();
                 }
             }

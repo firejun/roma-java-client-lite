@@ -2,6 +2,8 @@ package com.rakuten.rit.roma.romac4j.routing;
 
 import java.util.HashMap;
 
+import com.rakuten.rit.roma.romac4j.pool.Connection;
+
 public class RoutingData {
 	private int formatVer = 0;
 	private short dgstBits = 0;
@@ -12,6 +14,7 @@ public class RoutingData {
 	private HashMap<Long, Long> vClk = null;
 	private HashMap<Long, int[]> vNode = null;
 
+	// TODO: ???
 	static public RoutingData(Connection con){
 	    return null;
 	}
