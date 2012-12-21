@@ -9,15 +9,21 @@ public class ValueReceiver extends Receiver {
     
     @Override
     public void receive(Connection con) throws TimeoutException {
-        // TODO Auto-generated method stub
+        // TODO
 
     }
 
     public byte[] getValue(){
         // TODO
+
         return value;
     }
-    
+
+    public byte[] getRouting(){
+        // TODO
+        return value;
+    }
+
     public int getCasid(){
         // TODO
         return -1;
