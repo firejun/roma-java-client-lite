@@ -21,6 +21,6 @@ public class Start {
 
 		time0 = System.currentTimeMillis() - time0;
 		log.debug("Elap Time: " + time0/1000.0);
-		rc.close();
+		rc.destroy();
     }
 }

@@ -2,11 +2,10 @@ package com.rakuten.rit.roma.romac4j.pool;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.Socket;
 
 import org.apache.commons.pool.PoolableObjectFactory;
 
-public class SocketPoolFactory implements PoolableObjectFactory<Socket> {
+public class SocketPoolFactory implements PoolableObjectFactory<Connection> {
 	private String host;
 	private int port;
 	
@@ -15,42 +14,27 @@ public class SocketPoolFactory implements PoolableObjectFactory<Socket> {
 		this.port = port;
 	}
 
-	public Socket makeObject() throws IOException {
-		Socket socket = new Socket();
-		socket.connect(new InetSocketAddress(host, port));
-		return socket;	
+	public Connection makeObject() throws IOException {
+	    Connection con = new Connection();
+		con.connect(new InetSocketAddress(host, port));
+		return con;	
 	}
 
-	public void destroyObject(Socket socket) throws Exception {
-		if (socket instanceof Socket) {
-			socket.close();
+	public void destroyObject(Connection con) throws Exception {
+		if (con instanceof Connection) {
+		    con.close();
 		}		
 	}
 
-	public boolean validateObject(Socket socket) {
-		return socket.isConnected();
-//		byte[] b = new byte[1];
-//		if (socket instanceof Socket) {
-//			try {
-//				BufferedInputStream is = new BufferedInputStream(socket.getInputStream());
-//				is.read(b, 0, 0);
-//			} catch (IOException e) {
-//				e.printStackTrace();
-//				return false;
-//			} 
-//			if (b[0] == 0) {
-//				return true;
-//			}
-//			return true;
-//		}
-//		return false;
+	public boolean validateObject(Connection con) {
+		return con.isConnected();
 	}
 
-	public void activateObject(Socket socket) throws Exception {
+	public void activateObject(Connection con) throws Exception {
 		
 	}
 
-	public void passivateObject(Socket obj) throws Exception {
+	public void passivateObject(Connection con) throws Exception {
 		
 	}
 }

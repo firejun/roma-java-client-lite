@@ -7,9 +7,9 @@ import java.util.Properties;
 
 import org.apache.log4j.Logger;
 
-import com.rakuten.rit.roma.romac4j.utils.Constants;
 import com.rakuten.rit.roma.romac4j.utils.StringUtils;
 
+@Deprecated
 public class BasicCommands {
 	protected static Logger log = Logger.getLogger(BasicCommands.class.getName());
 
@@ -22,7 +22,7 @@ public class BasicCommands {
 					true);
 
 			// Execute command
-			writer.write("get " + key + Constants.CRLF);
+			writer.write("get " + key + new String(new byte[] { 0x0a, 0x0d }));
 			writer.flush();
 
 			// Receive header part
@@ -38,13 +38,13 @@ public class BasicCommands {
 
 				// Initialize buffer
 				byte[] b = new byte[Integer.valueOf(props.getProperty("bufferSize"))];
-				byte[] buff = new byte[iVal + Constants.CRLF_LEN];
+				byte[] buff = new byte[iVal + 7];
 				result = new byte[iVal];
 
 				// Read from stream
 				int receiveCount = 0;
 				int count = 0;
-				while (receiveCount < iVal + Constants.CRLF_LEN) {
+				while (receiveCount < iVal + 7) {
 					count = is.read(b, 0, Integer.valueOf(props.getProperty("bufferSize")));
 					System.arraycopy(b, 0, buff, receiveCount, count);
 					receiveCount += count;

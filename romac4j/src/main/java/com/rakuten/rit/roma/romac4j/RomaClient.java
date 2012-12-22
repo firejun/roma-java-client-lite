@@ -1,20 +1,14 @@
 package com.rakuten.rit.roma.romac4j;
 
-import java.io.PrintWriter;
-import java.net.Socket;
 import java.util.Properties;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
-import com.rakuten.rit.roma.romac4j.commands.BasicCommands;
 import com.rakuten.rit.roma.romac4j.pool.Connection;
 import com.rakuten.rit.roma.romac4j.pool.SocketPoolSingleton;
-import com.rakuten.rit.roma.romac4j.routing.GetRouting;
-import com.rakuten.rit.roma.romac4j.routing.RoutingData;
 import com.rakuten.rit.roma.romac4j.routing.Routing;
-import com.rakuten.rit.roma.romac4j.utils.Constants;
 import com.rakuten.rit.roma.romac4j.utils.PropertiesUtils;
 
 public class RomaClient {
@@ -24,8 +18,10 @@ public class RomaClient {
     private SocketPoolSingleton sps = SocketPoolSingleton.getInstance();
     private Routing routing;
     //private GetRouting routing;
-    private BasicCommands basicCommands = new BasicCommands();
+    //private BasicCommands basicCommands = new BasicCommands();
 
+    private int maxRetry = 5;
+    
     public RomaClient() {
         BasicConfigurator.configure();
         log.debug("Init Section.");
@@ -35,14 +31,14 @@ public class RomaClient {
             props = pu.getRomaClientProperties();
             setEnv();
 
-            Socket socket = sps
-                    .getConnection(props.getProperty("address_port"));
-            GetRouting getRouting = new GetRouting(props);
-            String mklHash = getRouting.getMklHash(socket);
-            RoutingData routingData = getRouting.getRoutingDump(socket);
-            log.debug("Init mklHash: " + mklHash);
-            sps.returnConnection(props.getProperty("address_port"), socket);
-            routing = new Routing(routingData, mklHash, props);
+            //Socket socket = sps
+            //        .getConnection(props.getProperty("address_port"));
+            //GetRouting getRouting = new GetRouting(props);
+            //String mklHash = getRouting.getMklHash(socket);
+            //RoutingData routingData = getRouting.getRoutingDump(socket);
+            //log.debug("Init mklHash: " + mklHash);
+            //sps.returnConnection(props.getProperty("address_port"), socket);
+            routing = new Routing(props);
             routing.start();
 
         } catch (Exception e) {
@@ -62,7 +58,7 @@ public class RomaClient {
         props.setProperty("timeout", String.valueOf(timeout));
     }
 
-    public void close() {
+    public void destroy() {
         routing.setStatus(true);
     }
 
@@ -83,8 +79,8 @@ public class RomaClient {
                 routing.returnConnection(con);
             } catch (TimeoutException e) {
                 retry = true;
-                routing.failCount();
-                if (rcv.retry++ > 5) {
+                routing.failCount(con);
+                if (rcv.retry++ > maxRetry) {
                     throw new RetryOutException();
                 }
             }
@@ -100,7 +96,7 @@ public class RomaClient {
 
     private boolean set(String cmd, String key, byte[] value, int expt) throws RetryOutException{
         Receiver rcv = sendCmd(new StringReceiver(), cmd, key,
-                "0  " + expt + " " + value.length, value);
+                "0 " + expt + " " + value.length, value);
         return rcv.toString().equals("STORED");        
     }
     
@@ -145,12 +141,22 @@ public class RomaClient {
     }
 
     public boolean cas(String key, Cas callback) throws RetryOutException {
-        Receiver rcv = sendCmd(new ValueReceiver(), "get", key, null, null);
+        Receiver rcv = sendCmd(new ValueReceiver(), "gets", key, null, null);
         byte[] value = callback.cas((ValueReceiver)rcv);
         
-        Receiver rcv2 = sendCmd(new StringReceiver(), "cas", key, null, value);
+        Receiver rcv2 = sendCmd(new StringReceiver(), "cas", key, null, value, ((ValueReceiver)rcv).getCasid());
         return rcv2.toString().equals("STORED");
     }
+    
+    /*
+     * res = rv.cas("key", new Cas(arg){
+     *   cas(ValueReceiver rcv){
+     *   
+     *      return value;
+     *   }
+     *   };
+     *   );
+     */
 
     // public byte[] get(String key) {
     // byte[] result = null;
