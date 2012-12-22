@@ -11,21 +11,32 @@ public class Connection extends Socket {
     private String nodeId;
     private String sendCmd;
     private InputStream is;
+    private int bufferSize;
 
     public Connection() {
     }
 
     public void write(String cmd, String key, String opt, byte[] value,
             int casid) throws TimeoutException {
-        // TODO
-
-        // cmd + " " + key;
-        // cmd + " " + key + " " + opt;
-        // cmd + " " + key + " " + opt + " " + value.length;
-        // cmd + " " + key + " " + opt + " " + value.length + " " + casid;
-
-        if (cmd.equals("mklhash 0") || cmd.equals("routingdump bin")) {
+        sendCmd = null;
+        if (cmd != null && cmd.length() != 0) {
             sendCmd = cmd;
+        }
+
+        if (key != null && key.length() != 0) {
+            sendCmd = " " + key;
+        }
+
+        if (opt != null && opt.length() != 0) {
+            sendCmd = " " + opt;
+        }
+
+        if (value != null && value.length != 0) {
+            sendCmd = " " + value.length;
+        }
+
+        if (casid != -1) {
+            sendCmd = " " + casid;
         }
     }
 
@@ -37,13 +48,16 @@ public class Connection extends Socket {
         this.nodeId = nodeId;
     }
 
+    public void setBufferSize(int bufferSize) {
+        this.bufferSize = bufferSize;
+    }
+
     public String readLine() {
         PrintWriter writer = null;
         // BufferedInputStream is = null;
 
         byte[] b = new byte[1];
-        // TODO: const...
-        byte[] buff = new byte[1024];
+        byte[] buff = new byte[bufferSize];
         int i = 0;
         try {
             writer = new PrintWriter(getOutputStream(), true);
@@ -53,8 +67,7 @@ public class Connection extends Socket {
 
             is = new BufferedInputStream(getInputStream());
             while (true) {
-                // const...
-                if (i > 1024) {
+                if (i > bufferSize) {
                     throw new ArrayIndexOutOfBoundsException("Too much size.");
                 }
                 is.read(b, 0, 1);
@@ -88,15 +101,14 @@ public class Connection extends Socket {
         }
 
         // Initialize buffer
-        // TODO: const...
-        byte[] b = new byte[1024];
+        byte[] b = new byte[bufferSize];
         byte[] buff = new byte[rtLen + 7];
 
         int receiveCount = 0;
         int count = 0;
         try {
             while (receiveCount < rtLen + 7) {
-                count = is.read(b, 0, 1024);
+                count = is.read(b, 0, bufferSize);
                 System.arraycopy(b, 0, buff, receiveCount, count);
                 receiveCount += count;
             }
