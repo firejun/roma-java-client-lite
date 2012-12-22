@@ -103,6 +103,7 @@ public class Connection extends Socket {
         // Initialize buffer
         byte[] b = new byte[bufferSize];
         byte[] buff = new byte[rtLen + 7];
+        byte[] result = new byte[rtLen];
 
         int receiveCount = 0;
         int count = 0;
@@ -112,9 +113,10 @@ public class Connection extends Socket {
                 System.arraycopy(b, 0, buff, receiveCount, count);
                 receiveCount += count;
             }
+            System.arraycopy(buff, 0, result, 0, rtLen);
         } catch (IOException e) {
             // e.printStackTrace();
         }
-        return buff;
+        return result;
     }
 }
