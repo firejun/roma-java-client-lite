@@ -6,27 +6,17 @@ import com.rakuten.rit.roma.romac4j.pool.Connection;
 
 public class ValueReceiver extends Receiver {
     byte[] value;
-    
+
     @Override
     public void receive(Connection con) throws TimeoutException {
-        // TODO
-
+        value = con.readValue();
     }
 
-    public byte[] getValue(){
-        // TODO
-
+    public byte[] getValue() {
         return value;
     }
 
-    public byte[] getRouting(){
-        // TODO
-        return value;
-    }
-
-    public int getCasid(){
-        // TODO
+    public int getCasid() {
         return -1;
     }
-    
 }
