@@ -1,12 +1,8 @@
 package com.rakuten.rit.roma.romac4j.routing;
 
-import java.io.BufferedInputStream;
-import java.io.PrintWriter;
-import java.net.Socket;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
-import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.TimeoutException;
 
@@ -17,24 +13,22 @@ import com.rakuten.rit.roma.romac4j.StringReceiver;
 import com.rakuten.rit.roma.romac4j.ValueReceiver;
 import com.rakuten.rit.roma.romac4j.pool.Connection;
 import com.rakuten.rit.roma.romac4j.pool.SocketPoolSingleton;
-import com.rakuten.rit.roma.romac4j.utils.StringUtils;
 
 public final class Routing extends Thread {
     protected static Logger log = Logger.getLogger(Routing.class.getName());
     private SocketPoolSingleton sps = SocketPoolSingleton.getInstance();
-    private Properties props;
     private String mklHash;
     private RoutingData routingData;
     private Random rnd = new Random(System.currentTimeMillis());
-    // private int rndVal;
     private boolean status = false;
 
     /**
      * 
      * @param props
      */
-    public Routing(Properties props) {
-        this.props = props;
+    public Routing(String nodeId) {
+        routingData.setNumOfNodes(1);
+        routingData.setNodeId(new String[]{nodeId});
     }
 
     /**
@@ -59,6 +53,7 @@ public final class Routing extends Thread {
                 e.printStackTrace();
             }
             try {
+                // TODO: const...
                 Thread.sleep(5000);
             } catch (InterruptedException e) {
             }
@@ -178,8 +173,8 @@ public final class Routing extends Thread {
             con = getConnection();
             con.write("routingdump bin", null, null, null, -1);
             rcv.receive(con);
-            buff = ((ValueReceiver)rcv).getValue();
-            
+            buff = ((ValueReceiver) rcv).getValue();
+
             // ByteData bd;
             // bd.receive(con, len);
             //
@@ -279,7 +274,7 @@ public final class Routing extends Thread {
         } catch (Exception e) {
             e.printStackTrace();
             // TODO:
-            //throw new Exception("RoutingDump Exception.");
+            // throw new Exception("RoutingDump Exception.");
         }
         return routingData;
     }

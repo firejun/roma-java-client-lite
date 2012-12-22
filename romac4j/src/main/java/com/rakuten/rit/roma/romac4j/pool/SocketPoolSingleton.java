@@ -21,20 +21,19 @@ public class SocketPoolSingleton {
 
     private GenericObjectPool.Config config;
     private HashMap<String, GenericObjectPool<Connection>> poolMap;
-    // private int numOfConnection;
     private int timeout;
     private int expTimeout;
+    private int bufferSize;
 
-    public void setEnv(int maxActive, int maxIdle, int timeout, int expTimeout,
-            int numOfConnection) {
+    public void setEnv(int maxActive, int maxIdle, int timeout, int expTimeout, int bufferSize) {
         poolMap = new HashMap<String, GenericObjectPool<Connection>>();
         config = new GenericObjectPool.Config();
         config.maxActive = maxActive;
         config.maxIdle = maxIdle;
         config.whenExhaustedAction = GenericObjectPool.WHEN_EXHAUSTED_GROW;
-        // this.numOfConnection = numOfConnection;
         this.timeout = timeout;
         this.expTimeout = expTimeout;
+        this.bufferSize = bufferSize;
     }
 
     public synchronized Connection getConnection(String nodeId) {
@@ -53,6 +52,7 @@ public class SocketPoolSingleton {
             con = pool.borrowObject();
             con.setNodeId(nodeId);
             con.setSoTimeout(timeout);
+            con.setBufferSize(bufferSize);
         } catch (Exception e) {
             try {
                 con.close();
