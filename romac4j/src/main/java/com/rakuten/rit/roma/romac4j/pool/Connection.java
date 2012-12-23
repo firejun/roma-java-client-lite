@@ -53,6 +53,13 @@ public class Connection extends Socket {
         }
     }
 
+    public void write(String cmd) throws IOException{
+        OutputStream os = this.getOutputStream();
+        cmd += "\r\n";
+        os.write(cmd.getBytes());
+        os.flush();
+    }
+    
     public String getNodeId() {
         return nodeId;
     }
@@ -110,5 +117,14 @@ public class Connection extends Socket {
         } catch (IOException e) {
         }
         return result;
+    }
+    
+    public void forceClose() {
+        try {
+            if( !this.isClosed() )
+                this.close();
+        } catch (IOException e) {
+            log.warn(e.getMessage());
+        }
     }
 }

@@ -1,8 +1,8 @@
 package com.rakuten.rit.roma.romac4j.routing;
 
-import java.security.MessageDigest;
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
+import java.text.ParseException;
 import java.util.Random;
 import java.util.concurrent.TimeoutException;
 
@@ -18,23 +18,26 @@ public final class Routing extends Thread {
     protected static Logger log = Logger.getLogger(Routing.class.getName());
     private SocketPoolSingleton sps = SocketPoolSingleton.getInstance();
     private String mklHash;
-    private RoutingData routingData;
+    private RoutingData routingData = null;
     private Random rnd = new Random(System.currentTimeMillis());
     private boolean status = false;
+    private String[] initialNodes = null;
 
     /**
      * 
      * @param props
      */
     public Routing(String nodeId) {
-        routingData = new RoutingData();
-        routingData.setNumOfNodes(1);
-        routingData.setNodeId(new String[] { nodeId });
+        initialNodes = new String[] { nodeId };
+    }
+
+    public Routing(String[] nodes) {
+        initialNodes = nodes;
     }
 
     /**
-	 * 
-	 */
+     * 
+     */
     public void run() {
         while (status == false) {
             try {
@@ -61,32 +64,6 @@ public final class Routing extends Thread {
         }
     }
 
-    /**
-     * 
-     * @param key
-     * @return long vn
-     * @throws NoSuchAlgorithmException
-     */
-    public long getVn(String key) throws NoSuchAlgorithmException {
-        int divBits = 0;
-        int dgstBits = 0;
-        synchronized (routingData) {
-            divBits = routingData.getDivBits();
-            dgstBits = routingData.getDgstBits();
-        }
-        long mask = ((1L << divBits) - 1) << (dgstBits - divBits);
-        MessageDigest md = MessageDigest.getInstance("SHA1");
-        md.update(key.getBytes());
-        byte[] b = md.digest();
-        long h = ((long) b[b.length - 7] << 48) & 0xff000000000000L
-                | ((long) b[b.length - 6] << 40) & 0xff0000000000L
-                | ((long) b[b.length - 5] << 32) & 0xff00000000L
-                | ((long) b[b.length - 4] << 24) & 0xff000000L
-                | ((long) b[b.length - 3] << 16) & 0xff0000L
-                | ((long) b[b.length - 2] << 8) & 0xff00L
-                | (long) b[b.length - 1] & 0xffL;
-        return h & mask;
-    }
 
     /**
      * 
@@ -97,37 +74,22 @@ public final class Routing extends Thread {
     }
 
     public Connection getConnection() {
-        Connection con = null;
-        String[] nodeId = null;
-        int rndVal = rnd.nextInt(routingData.getNumOfNodes());
-        try {
-            synchronized (routingData) {
-                nodeId = routingData.getNodeId();
-            }
-            con = sps.getConnection(nodeId[rndVal]);
-        } catch (Exception ex) {
-            // TODO: Exception throw??
+        if(routingData != null){
+            int n = rnd.nextInt(routingData.getNumOfNodes());
+            return(sps.getConnection(routingData.getNodeId()[n]));
+        }else{
+            int n = rnd.nextInt(initialNodes.length);
+            return(sps.getConnection(initialNodes[n]));
         }
-        return con;
     }
 
     public Connection getConnection(String key) {
-        Connection con = null;
-        String[] nodeId = null;
-        int[] vNode = null;
         try {
-            long vn = getVn(key);
-            synchronized (routingData) {
-                nodeId = routingData.getNodeId();
-                vNode = routingData.getVNode().get(vn);
-            }
-            con = sps.getConnection(nodeId[vNode[0]]);
-            con.setNodeId(nodeId[vNode[0]]);
+            String nid = routingData.getPrimaryNodeId(key);
+            return(sps.getConnection(nid));
         } catch (NoSuchAlgorithmException ex) {
-            // TODO: Exception throw??
+            throw new RuntimeException("fatal:" + ex.getMessage());
         }
-
-        return con;
     }
 
     public void returnConnection(Connection con) {
@@ -143,31 +105,37 @@ public final class Routing extends Thread {
         Receiver rcv = new StringReceiver();
         try {
             con = getConnection();
-            con.write("mklhash 0", null, null, null, -1);
+            con.write("mklhash 0");
             rcv.receive(con);
             returnConnection(con);
-        } catch (TimeoutException e) {
+        } catch (Exception e) {
+            failCount(con);
+            con.forceClose();
+            return null;
         }
         return rcv.toString();
     }
 
     private RoutingData getRoutingDump() {
+        Connection con = null;
         RoutingData routingData = null;
         Receiver rcv = new ValueReceiver();
-        byte[] buff = null;
         try {
-            Connection con = getConnection();
-            con.write("routingdump bin", null, null, null, -1);
+            con = getConnection();
+            con.write("routingdump bin");
             rcv.receive(con);
-            buff = ((ValueReceiver)rcv).getValue();
-            
+            byte[] buff = ((ValueReceiver)rcv).getValue();
             routingData = new RoutingData(buff);
-            
             returnConnection(con);
+        } catch (ParseException e) {
+            log.error(e.getMessage());
+            returnConnection(con);
+            return null;
         } catch (Exception e) {
-            e.printStackTrace();
-            // TODO:
-            // throw new Exception("RoutingDump Exception.");
+            log.warn(e.getMessage());
+            failCount(con);
+            con.forceClose();
+            return null;
         }
         return routingData;
     }
