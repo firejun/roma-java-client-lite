@@ -1,15 +1,19 @@
 package com.rakuten.rit.roma.romac4j.pool;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.util.concurrent.TimeoutException;
 
+import org.apache.log4j.Logger;
+
 public class Connection extends Socket {
+    protected static Logger log = Logger.getLogger(Connection.class.getName());
     private String nodeId;
-    private String sendCmd;
+    private byte[] sendCmd;
     private InputStream is;
     private int bufferSize;
 
@@ -18,25 +22,34 @@ public class Connection extends Socket {
 
     public void write(String cmd, String key, String opt, byte[] value,
             int casid) throws TimeoutException {
-        sendCmd = null;
+        String cmdBuff = null;
         if (cmd != null && cmd.length() != 0) {
-            sendCmd = cmd;
+            cmdBuff = cmd;
         }
 
         if (key != null && key.length() != 0) {
-            sendCmd = " " + key;
+            cmdBuff += " " + key;
         }
 
         if (opt != null && opt.length() != 0) {
-            sendCmd = " " + opt;
-        }
-
-        if (value != null && value.length != 0) {
-            sendCmd = " " + value.length;
+            cmdBuff += " " + opt;
         }
 
         if (casid != -1) {
-            sendCmd = " " + casid;
+            cmdBuff += " " + casid;
+        }
+
+        cmdBuff += "\r\n";
+
+        if (value != null && value.length != 0) {
+            sendCmd = new byte[cmdBuff.length() + value.length + 2];
+            System.arraycopy(cmdBuff.getBytes(), 0, sendCmd, 0,
+                    cmdBuff.length());
+            System.arraycopy(value, 0, sendCmd, cmdBuff.length(), value.length);
+            System.arraycopy("\r\n".getBytes(), 0, sendCmd, sendCmd.length - 2,
+                    2);
+        } else {
+            sendCmd = cmdBuff.getBytes();
         }
     }
 
@@ -53,17 +66,14 @@ public class Connection extends Socket {
     }
 
     public String readLine() {
-        PrintWriter writer = null;
-        // BufferedInputStream is = null;
-
+        OutputStream os = null;
         byte[] b = new byte[1];
         byte[] buff = new byte[bufferSize];
         int i = 0;
         try {
-            writer = new PrintWriter(getOutputStream(), true);
-
-            writer.write(sendCmd + "\r\n");
-            writer.flush();
+            os = new BufferedOutputStream(getOutputStream());
+            os.write(sendCmd);
+            os.flush();
 
             is = new BufferedInputStream(getInputStream());
             while (true) {
@@ -80,31 +90,14 @@ public class Connection extends Socket {
                 i++;
             }
         } catch (Exception e) {
-            // throw new Exception("Can't convert header.");
-            e.printStackTrace();
         }
         return new String(buff, 0, i);
     }
 
-    public byte[] readValue() {
-        // BufferedInputStream is = null;
-        int rtLen = 0;
-        String str = readLine();
-        if (sendCmd.equals("routingdump bin")) {
-            rtLen = Integer.parseInt(str);
-        } else {
-            String[] header = str.split(" ");
-            if (header.length == 4) {
-                rtLen = Integer.valueOf(header[3]);
-            }
-            // throw Exception???
-        }
-
-        // Initialize buffer
+    public byte[] readValue(int rtLen) {
         byte[] b = new byte[bufferSize];
         byte[] buff = new byte[rtLen + 7];
         byte[] result = new byte[rtLen];
-
         int receiveCount = 0;
         int count = 0;
         try {
@@ -115,7 +108,6 @@ public class Connection extends Socket {
             }
             System.arraycopy(buff, 0, result, 0, rtLen);
         } catch (IOException e) {
-            // e.printStackTrace();
         }
         return result;
     }
