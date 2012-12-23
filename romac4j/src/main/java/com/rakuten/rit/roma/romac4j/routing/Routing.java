@@ -169,113 +169,18 @@ public final class Routing extends Thread {
     }
 
     private RoutingData getRoutingDump() {
-        RoutingData routingData = new RoutingData();
-        Connection con = null;
+        RoutingData routingData = null;
         Receiver rcv = new ValueReceiver();
-        String str = null;
         byte[] buff = null;
         try {
-            con = getConnection();
+            Connection con = getConnection();
             con.write("routingdump bin", null, null, null, -1);
             rcv.receive(con);
             buff = ((ValueReceiver)rcv).getValue();
             
-            // ByteData bd;
-            // bd.receive(con, len);
-            //
-            // if(bd.getString(2).equals("RT"){
-            // }
-            // ver = bd.getInt(2);
-            // dgstBits = db.getInt(1);
-
-            // # 2 bytes('RT'):magic code
-            int pos = 0;
-            str = new String(new byte[] { buff[pos], buff[pos + 1] });
-            if (!str.equals("RT")) {
-                log.debug("This is not RT Data.");
-                throw new Exception("Illegal Format.");
-            }
-            pos += 2;
-
-            // # unsigned short:format version
-            int formatVer = (buff[pos] << 8) & 0xff00 | buff[pos + 1] & 0xff;
-            pos += 2;
-            log.debug("formatVer:" + formatVer);
-
-            // # unsigned char:dgst_bits
-            short dgstBits = buff[pos];
-            pos += 1;
-            log.debug("dgstBits:" + dgstBits);
-
-            // unsigned char:div_bits
-            short divBits = buff[pos];
-            pos += 1;
-            log.debug("divBits:" + divBits);
-
-            // unsigned char:rn
-            short rn = buff[pos];
-            pos += 1;
-            log.debug("rn:" + rn);
-
-            // # unsigned short:number of nodes
-            int numOfNodes = (buff[pos] << 8) & 0xff00 | buff[pos + 1] & 0xff;
-            pos += 2;
-            log.debug("numOfNodes:" + numOfNodes);
-
-            // # string:node-id
-            String[] nodeId = new String[numOfNodes];
-            for (int i = 0; i < numOfNodes; i++) {
-                int tmpLen = (buff[pos] << 8) & 0xff00 | buff[pos + 1] & 0xff;
-                pos += 2;
-                byte[] tmpByte = new byte[tmpLen];
-                for (int j = 0; j < tmpLen; j++) {
-                    tmpByte[j] = buff[pos + j];
-                }
-                nodeId[i] = new String(tmpByte);
-                pos += tmpLen;
-            }
-            log.debug("nodeId:");
-            for (int i = 0; i < numOfNodes; i++) {
-                log.debug(nodeId[i]);
-            }
-
-            // int32_v_clk / index of nodes
-            // map key=vnode val=[0]v_clk, [1..n]node_id
-            HashMap<Long, Long> vClk = new HashMap<Long, Long>();
-            HashMap<Long, int[]> vNode = new HashMap<Long, int[]>();
-            int[] tmpNodes = null;
-            for (int i = 0; i < Math.pow(2, divBits); i++) {
-                long vn = (long) i << (dgstBits - divBits);
-                // log.debug("vn:" + vn);
-                long tmpClk = (buff[pos] << 24) & 0xff000000L
-                        | (buff[pos + 1] << 16) & 0xff0000L
-                        | (buff[pos + 2] << 8) & 0xff00L | buff[pos + 3]
-                        & 0xffL;
-                // log.debug("tmpClk:" + tmpClk);
-                short tmpNumOfNodes = buff[pos + 4];
-                // log.debug("tmpNumOfNodes:" + tmpNumOfNodes);
-                pos += 5;
-                vClk.put(vn, tmpClk);
-                tmpNodes = new int[rn];
-                for (int j = 0; j < tmpNumOfNodes; j++) {
-                    int tmpIdx = (buff[pos] << 8) & 0xff00 | buff[pos + 1]
-                            & 0xff;
-                    pos += 2;
-                    tmpNodes[j] = tmpIdx;
-                    // log.debug("tmpIdx:" + tmpIdx);
-                }
-                vNode.put(vn, tmpNodes);
-            }
-
-            // Store to HashMap
-            routingData.setFormatVer(formatVer);
-            routingData.setDgstBits(dgstBits);
-            routingData.setDivBits(divBits);
-            routingData.setRn(rn);
-            routingData.setNumOfNodes(numOfNodes);
-            routingData.setNodeId(nodeId);
-            routingData.setVClk(vClk);
-            routingData.setVNode(vNode);
+            routingData = new RoutingData(buff);
+            
+            returnConnection(con);
         } catch (Exception e) {
             e.printStackTrace();
             // TODO:
