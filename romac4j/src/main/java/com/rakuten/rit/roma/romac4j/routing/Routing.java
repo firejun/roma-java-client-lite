@@ -27,8 +27,9 @@ public final class Routing extends Thread {
      * @param props
      */
     public Routing(String nodeId) {
+        routingData = new RoutingData();
         routingData.setNumOfNodes(1);
-        routingData.setNodeId(new String[]{nodeId});
+        routingData.setNodeId(new String[] { nodeId });
     }
 
     /**
@@ -87,16 +88,6 @@ public final class Routing extends Thread {
         return h & mask;
     }
 
-    // /**
-    // *
-    // * @return routingData
-    // */
-    // public RoutingData getRoutingData() {
-    // synchronized (routingData) {
-    // return routingData;
-    // }
-    // }
-
     /**
      * 
      * @param status
@@ -121,7 +112,6 @@ public final class Routing extends Thread {
     }
 
     public Connection getConnection(String key) {
-        // TODO
         Connection con = null;
         String[] nodeId = null;
         int[] vNode = null;
@@ -131,7 +121,7 @@ public final class Routing extends Thread {
                 nodeId = routingData.getNodeId();
                 vNode = routingData.getVNode().get(vn);
             }
-            con = sps.getConnection(nodeId[0]);
+            con = sps.getConnection(nodeId[vNode[0]]);
             con.setNodeId(nodeId[vNode[0]]);
         } catch (NoSuchAlgorithmException ex) {
             // TODO: Exception throw??
@@ -141,13 +131,11 @@ public final class Routing extends Thread {
     }
 
     public void returnConnection(Connection con) {
-        // TODO
         sps.returnConnection(con);
     }
 
     public void failCount(Connection con) {
         // TODO
-
     }
 
     private String getMklHash() {
