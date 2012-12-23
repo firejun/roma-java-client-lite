@@ -1,5 +1,8 @@
 package com.rakuten.rit.roma.romac4j.routing;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
 import java.util.HashMap;
 
 import org.apache.log4j.Logger;
@@ -47,12 +50,14 @@ public class RoutingData {
         }
     }
     
-    public RoutingData(byte[] _bin) throws Exception{
+    private RoutingData() {}
+
+    public RoutingData(byte[] _bin) throws ParseException {
         BinUtil bin = new BinUtil(_bin);
         
         if( !bin.getString(2).equals("RT") ){
             log.debug("This is not RT Data.");
-            throw new Exception("Illegal Format.");
+            throw new ParseException("Illegal Format.", 0);
         }
 
         formatVer = bin.getUInt16();    // unsigned short:format version
@@ -86,75 +91,43 @@ public class RoutingData {
         }
     }
 
-    // public RoutingData failover() {
-    // return null;
-    // }
-
-    // private RoutingData() {
-    public RoutingData() {
+    public String getPrimaryNodeId(String key) throws NoSuchAlgorithmException{
+        long vn = getVn(key);
+        int[] nodes = vNode.get(vn);
+        return nodeId[nodes[0]];
+    }
+    
+    /**
+     * 
+     * @param key
+     * @return long vn
+     * @throws NoSuchAlgorithmException
+     */
+    public long getVn(String key) throws NoSuchAlgorithmException {
+        long mask = ((1L << divBits) - 1) << (dgstBits - divBits);
+        MessageDigest md = MessageDigest.getInstance("SHA1");
+        md.update(key.getBytes());
+        byte[] b = md.digest();
+        long h = ((long) b[b.length - 7] << 48) & 0xff000000000000L
+                | ((long) b[b.length - 6] << 40) & 0xff0000000000L
+                | ((long) b[b.length - 5] << 32) & 0xff00000000L
+                | ((long) b[b.length - 4] << 24) & 0xff000000L
+                | ((long) b[b.length - 3] << 16) & 0xff0000L
+                | ((long) b[b.length - 2] << 8) & 0xff00L
+                | (long) b[b.length - 1] & 0xffL;
+        return h & mask;
     }
 
-    public int getFormatVer() {
-        return formatVer;
-    }
-
-    public void setFormatVer(int formatVer) {
-        this.formatVer = formatVer;
-    }
-
-    public short getDgstBits() {
-        return dgstBits;
-    }
-
-    public void setDgstBits(short dgstBits) {
-        this.dgstBits = dgstBits;
-    }
-
-    public short getDivBits() {
-        return divBits;
-    }
-
-    public void setDivBits(short divBits) {
-        this.divBits = divBits;
-    }
-
-    public short getRn() {
-        return rn;
-    }
-
-    public void setRn(short rn) {
-        this.rn = rn;
+    public RoutingData failOver() {
+        // TODO
+        return null;
     }
 
     public int getNumOfNodes() {
         return numOfNodes;
     }
 
-    public void setNumOfNodes(int numOfNodes) {
-        this.numOfNodes = numOfNodes;
-    }
-
     public String[] getNodeId() {
         return nodeId;
-    }
-
-    public void setNodeId(String[] nodeId) {
-        this.nodeId = nodeId;
-    }
-
-    public HashMap<Long, Long> getVClk() {
-        return vClk;
-    }
-
-    public void setVClk(HashMap<Long, Long> vClk) {
-        this.vClk = vClk;
-    }
-
-    public HashMap<Long, int[]> getVNode() {
-        return vNode;
-    }
-
-    public void setVNode(HashMap<Long, int[]> vNode) {
-        this.vNode = vNode;
     }
 }
