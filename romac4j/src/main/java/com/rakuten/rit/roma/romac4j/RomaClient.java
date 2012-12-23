@@ -33,7 +33,6 @@ public class RomaClient {
 
             routing = new Routing(props.getProperty("address_port"));
             routing.start();
-
         } catch (Exception e) {
             log.error("Main Error.");
         }
@@ -130,18 +129,13 @@ public class RomaClient {
         return rcv.toString().equals("STORED");
     }
 
-    public boolean cas(String key, Cas callback) throws RetryOutException {
+    public boolean cas(String key, int expt, Cas callback)
+            throws RetryOutException {
         Receiver rcv = sendCmd(new ValueReceiver(), "gets", key, null, null);
         byte[] value = callback.cas((ValueReceiver) rcv);
 
-        Receiver rcv2 = sendCmd(new StringReceiver(), "cas", key, null, value,
-                ((ValueReceiver) rcv).getCasid());
+        Receiver rcv2 = sendCmd(new StringReceiver(), "cas", key, "0 " + expt
+                + " " + value.length, value, ((ValueReceiver) rcv).getCasid());
         return rcv2.toString().equals("STORED");
     }
-
-    /*
-     * res = rv.cas("key", new Cas(arg){ cas(ValueReceiver rcv){
-     * 
-     * return value; } }; );
-     */
 }
