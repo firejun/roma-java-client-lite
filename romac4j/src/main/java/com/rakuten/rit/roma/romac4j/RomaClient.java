@@ -39,7 +39,7 @@ public class RomaClient {
     }
 
     public void destroy() {
-        routing.setStatus(true);
+        routing.stopThread();
     }
 
     protected Receiver sendCmd(Receiver rcv, String cmd, String key,

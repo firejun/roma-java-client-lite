@@ -1,10 +1,9 @@
 package com.rakuten.rit.roma.romac4j.routing;
 
-import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
+import java.util.HashMap;
 import java.util.Random;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;
 
@@ -17,16 +16,15 @@ import com.rakuten.rit.roma.romac4j.pool.SocketPoolSingleton;
 public final class Routing extends Thread {
     protected static Logger log = Logger.getLogger(Routing.class.getName());
     private SocketPoolSingleton sps = SocketPoolSingleton.getInstance();
-    private String mklHash;
-    private RoutingData routingData = null;
     private Random rnd = new Random(System.currentTimeMillis());
-    private boolean status = false;
     private String[] initialNodes = null;
+    private HashMap<String,Integer> failCountMap = new HashMap<String,Integer>();
+    volatile private boolean threadLoop = false;
+    volatile private RoutingData routingData = null;
+    
+    private int failCount = 10;
+    private int threadSleep = 5000;
 
-    /**
-     * 
-     * @param props
-     */
     public Routing(String nodeId) {
         initialNodes = new String[] { nodeId };
     }
@@ -35,48 +33,44 @@ public final class Routing extends Thread {
         initialNodes = nodes;
     }
 
-    /**
-     * 
-     */
     public void run() {
-        while (status == false) {
+        if(threadLoop){
+            log.warn("routing check thread : already running.");
+            return;
+        }
+        log.info("routing check thread : started");
+        threadLoop = true;
+        while (threadLoop == false) {
             try {
-                String mklHash = getMklHash();
-                if (mklHash != null && !mklHash.equals(this.mklHash)) {
-                    this.mklHash = mklHash;
-                    RoutingData tempBuff = getRoutingDump();
-                    synchronized (routingData) {
-                        routingData = tempBuff;
+                String romaHash = getMklHash();
+                if(romaHash != null){
+                    String myHash = routingData.getMklHash("0");
+                    if( !romaHash.equals(myHash) ){
+                        RoutingData buf = getRoutingDump();
+                        if(buf != null){
+                            routingData = buf;
+                            synchronized(failCountMap){
+                                failCountMap.clear();
+                            }
+                            log.info("Routing has changed.");
+                        }
                     }
-                    log.debug("Routing change!");
-                } else {
-                    log.debug("Routing no change!");
                 }
+                Thread.sleep(threadSleep);                
             } catch (Exception e) {
-                log.debug("run() Error.");
-                e.printStackTrace();
-            }
-            try {
-                // TODO: const...
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
+                log.debug("routing check thread : " + e.getMessage());
             }
         }
+        log.info("routing check thread : stopped");
     }
 
-
-    /**
-     * 
-     * @param status
-     */
-    public void setStatus(boolean status) {
-        this.status = status;
+    public void stopThread() {
+        threadLoop = false;
     }
 
     public Connection getConnection() {
         if(routingData != null){
-            int n = rnd.nextInt(routingData.getNumOfNodes());
-            return(sps.getConnection(routingData.getNodeId()[n]));
+            return(sps.getConnection(routingData.getRandomNodeId()));
         }else{
             int n = rnd.nextInt(initialNodes.length);
             return(sps.getConnection(initialNodes[n]));
@@ -86,20 +80,53 @@ public final class Routing extends Thread {
     public Connection getConnection(String key) {
         try {
             String nid = routingData.getPrimaryNodeId(key);
+            if(nid == null){
+                log.error("getConnection() : can't get a primary node. key = " + key);
+                return getConnection();
+            }
             return(sps.getConnection(nid));
         } catch (NoSuchAlgorithmException ex) {
-            throw new RuntimeException("fatal:" + ex.getMessage());
+            log.error("getConnection() : " + ex.getMessage());
+            // fatal error : stop an application
+            throw new RuntimeException("fatal : " + ex.getMessage());
         }
     }
 
     public void returnConnection(Connection con) {
+        synchronized(failCountMap){
+            failCountMap.remove(con.getNodeId());
+        }
         sps.returnConnection(con);
     }
 
     public void failCount(Connection con) {
-        // TODO
+        int n = 0;
+        String nid = con.getNodeId();
+        synchronized(failCountMap){
+            if(failCountMap.containsKey(nid)) {
+                n = failCountMap.get(nid);
+            }
+            n ++;
+            if(n >= failCount){
+                failCountMap.clear();
+                routingData = routingData.failOver(nid);
+                
+                // TODO : will close connections for fail node in connection pool.
+                
+            }else{
+                failCountMap.put(con.getNodeId(), n);                
+            }
+        }
     }
 
+    public void setFailCount(int n) {
+        failCount = n;
+    }
+    
+    public void setThreadSleep(int n) {
+        threadSleep = n;
+    }
+     
     private String getMklHash() {
         Connection con = null;
         Receiver rcv = new StringReceiver();
@@ -109,6 +136,7 @@ public final class Routing extends Thread {
             rcv.receive(con);
             returnConnection(con);
         } catch (Exception e) {
+            log.error("getMklHash() : " + e.getMessage());
             failCount(con);
             con.forceClose();
             return null;
@@ -128,11 +156,11 @@ public final class Routing extends Thread {
             routingData = new RoutingData(buff);
             returnConnection(con);
         } catch (ParseException e) {
-            log.error(e.getMessage());
+            log.error("getRoutingDump() : " + e.getMessage());
             returnConnection(con);
             return null;
         } catch (Exception e) {
-            log.warn(e.getMessage());
+            log.warn("getRoutingDump() : " + e.getMessage());
             failCount(con);
             con.forceClose();
             return null;
