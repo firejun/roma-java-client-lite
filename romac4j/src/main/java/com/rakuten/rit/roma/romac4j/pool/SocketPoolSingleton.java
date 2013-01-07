@@ -25,7 +25,8 @@ public class SocketPoolSingleton {
     private int expTimeout;
     private int bufferSize;
 
-    public void setEnv(int maxActive, int maxIdle, int timeout, int expTimeout, int bufferSize) {
+    public void setEnv(int maxActive, int maxIdle, int timeout, int expTimeout,
+            int bufferSize) {
         poolMap = new HashMap<String, GenericObjectPool<Connection>>();
         config = new GenericObjectPool.Config();
         config.maxActive = maxActive;
@@ -67,9 +68,14 @@ public class SocketPoolSingleton {
 
     }
 
-    // public synchronized void deleteConnection(String nodeId) {
-    //
-    // }
+    public synchronized void deleteConnection(String nodeId) {
+        GenericObjectPool<Connection> pool = null;
+        if (poolMap.containsKey(nodeId)) {
+            pool = poolMap.get(nodeId);
+            pool.clear();
+        }
+        poolMap.remove(nodeId);
+    }
 
     public synchronized void returnConnection(Connection con) {
         GenericObjectPool<Connection> pool = null;
