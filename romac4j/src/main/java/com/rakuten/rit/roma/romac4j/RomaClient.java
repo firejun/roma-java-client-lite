@@ -1,5 +1,6 @@
 package com.rakuten.rit.roma.romac4j;
 
+import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.TimeoutException;
 
@@ -32,7 +33,12 @@ public class RomaClient {
             maxRetry = Integer.parseInt(props.getProperty("maxRetry"));
 
             routing = new Routing(props.getProperty("address_port"));
+            routing.setFailCount(Integer.parseInt(props
+                    .getProperty("failCount")));
+            routing.setThreadSleep(Integer.parseInt(props
+                    .getProperty("threadSleep")));
             routing.start();
+            Thread.sleep(1000);
         } catch (Exception e) {
             log.error("Main Error.");
         }
@@ -57,12 +63,13 @@ public class RomaClient {
                 con.write(cmd, key, opt, value, casid);
                 rcv.receive(con);
                 routing.returnConnection(con);
-            } catch (TimeoutException e) {
+            } catch (TimeoutException e1) {
                 retry = true;
                 routing.failCount(con);
                 if (rcv.retry++ > maxRetry) {
                     throw new RetryOutException();
                 }
+            } catch (IOException e2) {
             }
         } while (retry);
 
