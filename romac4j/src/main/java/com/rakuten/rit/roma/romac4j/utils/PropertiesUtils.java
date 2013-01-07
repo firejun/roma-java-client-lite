@@ -12,6 +12,8 @@ public class PropertiesUtils {
     private static final String DEFAULT_EXP_TIMEOUT = "10000";
     private static final String DEFAULT_BUFFER_SIZE = "1024";
     private static final String DEFAULT_MAX_RETRY = "5";
+    private static final String DEFAULT_FAIL_COUNT = "10";
+    private static final String DEFAULT_THREAD_SLEEP = "5000";
 
     public PropertiesUtils() {
     }
@@ -25,6 +27,8 @@ public class PropertiesUtils {
         props.setProperty("expTimeout", DEFAULT_EXP_TIMEOUT);
         props.setProperty("bufferSize", DEFAULT_BUFFER_SIZE);
         props.setProperty("maxRetry", DEFAULT_MAX_RETRY);
+        props.setProperty("failCount", DEFAULT_FAIL_COUNT);
+        props.setProperty("threadSleep", DEFAULT_THREAD_SLEEP);
         try {
             FileInputStream pFile = new FileInputStream(CONFIG_FILE);
             props.load(pFile);
