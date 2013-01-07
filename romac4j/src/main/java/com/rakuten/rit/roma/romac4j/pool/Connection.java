@@ -21,7 +21,7 @@ public class Connection extends Socket {
     }
 
     public void write(String cmd, String key, String opt, byte[] value,
-            int casid) throws TimeoutException {
+            int casid) throws TimeoutException, IOException {
         String cmdBuff = null;
         if (cmd != null && cmd.length() != 0) {
             cmdBuff = cmd;
@@ -51,15 +51,15 @@ public class Connection extends Socket {
         } else {
             sendCmd = cmdBuff.getBytes();
         }
-    }
-
-    public void write(String cmd) throws IOException{
-        OutputStream os = this.getOutputStream();
-        cmd += "\r\n";
-        os.write(cmd.getBytes());
+        OutputStream os = new BufferedOutputStream(getOutputStream());
+        os.write(sendCmd);
         os.flush();
     }
-    
+
+    public void write(String cmd) throws TimeoutException, IOException {
+        write(cmd, null, null, null, -1);
+    }
+
     public String getNodeId() {
         return nodeId;
     }
@@ -73,15 +73,10 @@ public class Connection extends Socket {
     }
 
     public String readLine() {
-        OutputStream os = null;
         byte[] b = new byte[1];
         byte[] buff = new byte[bufferSize];
         int i = 0;
         try {
-            os = new BufferedOutputStream(getOutputStream());
-            os.write(sendCmd);
-            os.flush();
-
             is = new BufferedInputStream(getInputStream());
             while (true) {
                 if (i > bufferSize) {
@@ -118,10 +113,10 @@ public class Connection extends Socket {
         }
         return result;
     }
-    
+
     public void forceClose() {
         try {
-            if( !this.isClosed() )
+            if (!this.isClosed())
                 this.close();
         } catch (IOException e) {
             log.warn(e.getMessage());
