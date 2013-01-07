@@ -18,10 +18,10 @@ public final class Routing extends Thread {
     private SocketPoolSingleton sps = SocketPoolSingleton.getInstance();
     private Random rnd = new Random(System.currentTimeMillis());
     private String[] initialNodes = null;
-    private HashMap<String,Integer> failCountMap = new HashMap<String,Integer>();
+    private HashMap<String, Integer> failCountMap = new HashMap<String, Integer>();
     volatile private boolean threadLoop = false;
     volatile private RoutingData routingData = null;
-    
+
     private int failCount = 10;
     private int threadSleep = 5000;
 
@@ -34,29 +34,32 @@ public final class Routing extends Thread {
     }
 
     public void run() {
-        if(threadLoop){
+        if (threadLoop) {
             log.warn("routing check thread : already running.");
             return;
         }
         log.info("routing check thread : started");
         threadLoop = true;
-        while (threadLoop == false) {
+        while (threadLoop == true) {
             try {
+                String myHash = null;
                 String romaHash = getMklHash();
-                if(romaHash != null){
-                    String myHash = routingData.getMklHash("0");
-                    if( !romaHash.equals(myHash) ){
+                if (romaHash != null) {
+                    if (routingData != null) {
+                        myHash = routingData.getMklHash("0");
+                    }
+                    if (!romaHash.equals(myHash)) {
                         RoutingData buf = getRoutingDump();
-                        if(buf != null){
+                        if (buf != null) {
                             routingData = buf;
-                            synchronized(failCountMap){
+                            synchronized (failCountMap) {
                                 failCountMap.clear();
                             }
                             log.info("Routing has changed.");
                         }
                     }
                 }
-                Thread.sleep(threadSleep);                
+                Thread.sleep(threadSleep);
             } catch (Exception e) {
                 log.debug("routing check thread : " + e.getMessage());
             }
@@ -69,22 +72,24 @@ public final class Routing extends Thread {
     }
 
     public Connection getConnection() {
-        if(routingData != null){
-            return(sps.getConnection(routingData.getRandomNodeId()));
-        }else{
+        if (routingData != null) {
+            return (sps.getConnection(routingData.getRandomNodeId()));
+        } else {
             int n = rnd.nextInt(initialNodes.length);
-            return(sps.getConnection(initialNodes[n]));
+            return (sps.getConnection(initialNodes[n]));
         }
     }
 
     public Connection getConnection(String key) {
         try {
             String nid = routingData.getPrimaryNodeId(key);
-            if(nid == null){
-                log.error("getConnection() : can't get a primary node. key = " + key);
+            log.debug("nid:" + nid);
+            if (nid == null) {
+                log.error("getConnection() : can't get a primary node. key = "
+                        + key);
                 return getConnection();
             }
-            return(sps.getConnection(nid));
+            return (sps.getConnection(nid));
         } catch (NoSuchAlgorithmException ex) {
             log.error("getConnection() : " + ex.getMessage());
             // fatal error : stop an application
@@ -93,7 +98,7 @@ public final class Routing extends Thread {
     }
 
     public void returnConnection(Connection con) {
-        synchronized(failCountMap){
+        synchronized (failCountMap) {
             failCountMap.remove(con.getNodeId());
         }
         sps.returnConnection(con);
@@ -102,19 +107,20 @@ public final class Routing extends Thread {
     public void failCount(Connection con) {
         int n = 0;
         String nid = con.getNodeId();
-        synchronized(failCountMap){
-            if(failCountMap.containsKey(nid)) {
+        synchronized (failCountMap) {
+            if (failCountMap.containsKey(nid)) {
                 n = failCountMap.get(nid);
             }
-            n ++;
-            if(n >= failCount){
+            n++;
+            if (n >= failCount) {
                 failCountMap.clear();
                 routingData = routingData.failOver(nid);
-                
-                // TODO : will close connections for fail node in connection pool.
-                
-            }else{
-                failCountMap.put(con.getNodeId(), n);                
+
+                // TODO : will close connections for fail node in connection
+                // pool.
+
+            } else {
+                failCountMap.put(con.getNodeId(), n);
             }
         }
     }
@@ -122,11 +128,11 @@ public final class Routing extends Thread {
     public void setFailCount(int n) {
         failCount = n;
     }
-    
+
     public void setThreadSleep(int n) {
         threadSleep = n;
     }
-     
+
     private String getMklHash() {
         Connection con = null;
         Receiver rcv = new StringReceiver();
@@ -152,7 +158,7 @@ public final class Routing extends Thread {
             con = getConnection();
             con.write("routingdump bin");
             rcv.receive(con);
-            byte[] buff = ((ValueReceiver)rcv).getValue();
+            byte[] buff = ((ValueReceiver) rcv).getValue();
             routingData = new RoutingData(buff);
             returnConnection(con);
         } catch (ParseException e) {
