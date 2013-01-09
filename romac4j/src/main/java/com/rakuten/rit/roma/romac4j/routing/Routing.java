@@ -46,12 +46,16 @@ public final class Routing extends Thread {
                 String romaHash = getMklHash();
                 if (romaHash != null) {
                     if (routingData != null) {
-                        myHash = routingData.getMklHash("0");
+                        synchronized(this){
+                            myHash = routingData.getMklHash("0");
+                        }
                     }
                     if (!romaHash.equals(myHash)) {
                         RoutingData buf = getRoutingDump();
                         if (buf != null) {
-                            routingData = buf;
+                            synchronized(this){
+                                routingData = buf;
+                            }
                             synchronized (failCountMap) {
                                 failCountMap.clear();
                             }
@@ -71,7 +75,7 @@ public final class Routing extends Thread {
         threadLoop = false;
     }
 
-    public Connection getConnection() {
+    public Connection getConnection() throws Exception {
         if (routingData != null) {
             return (sps.getConnection(routingData.getRandomNodeId()));
         } else {
@@ -80,10 +84,13 @@ public final class Routing extends Thread {
         }
     }
 
-    public Connection getConnection(String key) {
+    public Connection getConnection(String key) throws Exception {
+        String nid = null;
         try {
-            String nid = routingData.getPrimaryNodeId(key);
-            log.debug("nid:" + nid);
+            synchronized(this){
+                nid = routingData.getPrimaryNodeId(key);
+            }
+            log.debug("nid: " + nid);
             if (nid == null) {
                 log.error("getConnection() : can't get a primary node. key = "
                         + key);
@@ -94,6 +101,8 @@ public final class Routing extends Thread {
             log.error("getConnection() : " + ex.getMessage());
             // fatal error : stop an application
             throw new RuntimeException("fatal : " + ex.getMessage());
+        } catch (Exception ex2){
+            return new Connection(nid);
         }
     }
 
@@ -105,24 +114,37 @@ public final class Routing extends Thread {
     }
 
     public void failCount(Connection con) {
+        failCount(con.getNodeId());
+    }
+    
+    public void failCount(String nid) {
+        log.debug("failCount: start");
         int n = 0;
-        String nid = con.getNodeId();
+        //String nid = con.getNodeId();
+        log.debug("failCount: nid="+nid);
         synchronized (failCountMap) {
+            log.debug("failCount: failCountMap nid="+nid);
+
             if (failCountMap.containsKey(nid)) {
                 n = failCountMap.get(nid);
             }
             n++;
+            log.debug("n: " + n);
             if (n >= failCount) {
+                log.debug("failCount: failOver");
                 failCountMap.clear();
-                routingData = routingData.failOver(nid);
+                synchronized(this){
+                    routingData = routingData.failOver(nid);
+                }
 
                 // TODO : will close connections for fail node in connection
                 // pool.
 
             } else {
-                failCountMap.put(con.getNodeId(), n);
+                failCountMap.put(nid, n);
             }
         }
+        log.debug("failCount: end");
     }
 
     public void setFailCount(int n) {
@@ -136,8 +158,10 @@ public final class Routing extends Thread {
     private String getMklHash() {
         Connection con = null;
         Receiver rcv = new StringReceiver();
+        String nid = null;
         try {
             con = getConnection();
+            nid = con.getNodeId();
             con.write("mklhash 0");
             rcv.receive(con);
             returnConnection(con);
@@ -154,8 +178,10 @@ public final class Routing extends Thread {
         Connection con = null;
         RoutingData routingData = null;
         Receiver rcv = new ValueReceiver();
+        String nid = null;
         try {
             con = getConnection();
+            nid = con.getNodeId();
             con.write("routingdump bin");
             rcv.receive(con);
             byte[] buff = ((ValueReceiver) rcv).getValue();

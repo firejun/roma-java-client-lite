@@ -6,35 +6,33 @@ import java.net.InetSocketAddress;
 import org.apache.commons.pool.PoolableObjectFactory;
 
 public class SocketPoolFactory implements PoolableObjectFactory<Connection> {
-	private String host;
-	private int port;
-	
-	public SocketPoolFactory(String host, int port) {
-		this.host = host;
-		this.port = port;
-	}
+    private String host;
+    private int port;
 
-	public Connection makeObject() throws IOException {
-	    Connection con = new Connection();
-		con.connect(new InetSocketAddress(host, port));
-		return con;	
-	}
+    public SocketPoolFactory(String host, int port) {
+        this.host = host;
+        this.port = port;
+    }
 
-	public void destroyObject(Connection con) throws Exception {
-		if (con instanceof Connection) {
-		    con.close();
-		}		
-	}
+    public Connection makeObject() throws IOException {
+        Connection con = new Connection();
+        con.connect(new InetSocketAddress(host, port));
+        return con;
+    }
 
-	public boolean validateObject(Connection con) {
-		return con.isConnected();
-	}
+    public void destroyObject(Connection con) throws Exception {
+        con.close();
+    }
 
-	public void activateObject(Connection con) throws Exception {
-		
-	}
+    public boolean validateObject(Connection con) {
+        return con.isConnected();
+    }
 
-	public void passivateObject(Connection con) throws Exception {
-		
-	}
+    public void activateObject(Connection con) throws Exception {
+
+    }
+
+    public void passivateObject(Connection con) throws Exception {
+
+    }
 }

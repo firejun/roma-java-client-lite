@@ -1,5 +1,6 @@
 package com.rakuten.rit.roma.romac4j;
 
+import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;
@@ -7,14 +8,19 @@ import org.apache.log4j.Logger;
 import com.rakuten.rit.roma.romac4j.pool.Connection;
 
 public class ValueReceiver extends Receiver {
-    protected static Logger log = Logger.getLogger(ValueReceiver.class.getName());
+    protected static Logger log = Logger.getLogger(ValueReceiver.class
+            .getName());
     String str;
     byte[] value;
 
     @Override
-    public void receive(Connection con) throws TimeoutException {
+    public void receive(Connection con) throws TimeoutException, IOException {
         int len = 0;
         str = con.readLine();
+        if(str == null){
+           throw new IOException();
+        }
+        log.debug("str: " + str);
         try {
             String[] header = str.split(" ");
             if (header.length >= 4) {
@@ -22,10 +28,18 @@ public class ValueReceiver extends Receiver {
             } else {
                 len = Integer.parseInt(str);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (NumberFormatException e) {
+            log.error("Error: NumberFormatException");
+            throw new IOException(e);
         }
-        value = con.readValue(len);
+
+        if (len > 0) {
+            log.debug("receive: len > 0");
+            value = con.readValue(len);
+        } else {
+            log.debug("receive: len == 0");
+            value = null;
+        }
     }
 
     public byte[] getValue() {

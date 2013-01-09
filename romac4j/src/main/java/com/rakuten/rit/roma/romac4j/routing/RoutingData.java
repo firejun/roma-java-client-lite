@@ -152,23 +152,29 @@ public class RoutingData {
 
         ArrayList<String> nodes = new ArrayList<String>();
         for(int i = 0; i < nodeId.length; i++){
-            if( !nodeId[i].equals(rmnode) ) nodes.add(nodeId[i]);
+            if( !nodeId[i].equals(rmnode) ){
+                log.debug("failOver : add node " + nodeId[i]);
+                nodes.add(nodeId[i]);
+            }
         }
-        ret.nodeId = (String[]) nodes.toArray();
+        ret.nodeId = nodes.toArray(new String[0]);
         ret.vClk = new HashMap<Long, Long>();
         ret.vNode = new HashMap<Long, String[]>();
 
         for(long vn : vNode.keySet()) {
             long clk = vClk.get(vn);
             nodes = new ArrayList<String>();
+            log.debug("failOver : vn = " + vn);
             for(String nid : vNode.get(vn)){
                 if( nid.equals(rmnode) ) {
                     clk ++;
                 } else {
                     nodes.add(nid);
+                    log.debug("failOver : add node to vNode " + nid);
                 }
             }
-            ret.vNode.put(vn, (String[]) nodes.toArray());
+            log.debug("failOver : add node to vClk " + clk);           
+            ret.vNode.put(vn, nodes.toArray(new String[0]));
             ret.vClk.put(vn, clk);
         }
         

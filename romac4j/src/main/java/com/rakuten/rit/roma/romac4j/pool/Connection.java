@@ -20,6 +20,10 @@ public class Connection extends Socket {
     public Connection() {
     }
 
+    public Connection(String nid) {
+        nodeId = nid;
+    }
+
     public void write(String cmd, String key, String opt, byte[] value,
             int casid) throws TimeoutException, IOException {
         String cmdBuff = null;
@@ -72,26 +76,24 @@ public class Connection extends Socket {
         this.bufferSize = bufferSize;
     }
 
-    public String readLine() {
+    public String readLine() throws IOException {
         byte[] b = new byte[1];
         byte[] buff = new byte[bufferSize];
         int i = 0;
-        try {
-            is = new BufferedInputStream(getInputStream());
-            while (true) {
-                if (i > bufferSize) {
-                    throw new ArrayIndexOutOfBoundsException("Too much size.");
-                }
-                is.read(b, 0, 1);
-                if (b[0] == 0x0d) {
-                    is.read(b, 0, 1);
-                    if (b[0] == 0x0a)
-                        break;
-                }
-                buff[i] = b[0];
-                i++;
+        is = new BufferedInputStream(getInputStream());
+        while (true) {
+            if (i > bufferSize) {
+                log.error("Buffer overflow: bufferSize=" + bufferSize + " i=" + i);
+                throw new IOException("Too much receiveing data size.");
             }
-        } catch (Exception e) {
+            is.read(b, 0, 1);
+            if (b[0] == 0x0d) {
+                is.read(b, 0, 1);
+                if (b[0] == 0x0a)
+                    break;
+            }
+            buff[i] = b[0];
+            i++;
         }
         return new String(buff, 0, i);
     }

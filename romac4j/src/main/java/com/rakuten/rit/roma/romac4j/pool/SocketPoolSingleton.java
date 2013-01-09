@@ -1,6 +1,7 @@
 package com.rakuten.rit.roma.romac4j.pool;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.util.HashMap;
 
 import org.apache.commons.pool.PoolableObjectFactory;
@@ -32,12 +33,13 @@ public class SocketPoolSingleton {
         config.maxActive = maxActive;
         config.maxIdle = maxIdle;
         config.whenExhaustedAction = GenericObjectPool.WHEN_EXHAUSTED_GROW;
+        //config.testOnBorrow = true;
         this.timeout = timeout;
         this.expTimeout = expTimeout;
         this.bufferSize = bufferSize;
     }
 
-    public synchronized Connection getConnection(String nodeId) {
+    public synchronized Connection getConnection(String nodeId) throws Exception {
         GenericObjectPool<Connection> pool = null;
         Connection con = null;
         String[] host = nodeId.split("_");
@@ -49,23 +51,12 @@ public class SocketPoolSingleton {
             pool = new GenericObjectPool<Connection>(factory, config);
             poolMap.put(nodeId, pool);
         }
-        try {
-            con = pool.borrowObject();
-            con.setNodeId(nodeId);
-            con.setSoTimeout(timeout);
-            con.setBufferSize(bufferSize);
-        } catch (Exception e) {
-            try {
-                con.close();
-                poolMap.remove(nodeId);
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
-            e.printStackTrace();
-        }
+        con = pool.borrowObject();
+        con.setNodeId(nodeId);
+        con.setSoTimeout(timeout);
+        con.setBufferSize(bufferSize);
 
         return con;
-
     }
 
     public synchronized void deleteConnection(String nodeId) {

@@ -22,11 +22,10 @@ public class Start {
         long time0 = System.currentTimeMillis();
         for (int i = 0; i < 5000; i++) {
             try {
-            b = rc.get("foo");
-            rc.get("foo");
-            log.debug(new String(b));
+                b = rc.get("foo");
+                log.debug(new String(b));
             } catch (Exception e) {
-                e.printStackTrace();
+                log.debug("Main Error: " + e.getMessage());
             }
             Thread.sleep(1000);
         }
