@@ -20,10 +20,12 @@ public final class Routing extends Thread {
     private String[] initialNodes = null;
     private HashMap<String, Integer> failCountMap = new HashMap<String, Integer>();
     volatile private boolean threadLoop = false;
+    volatile private RoutingData prevRoutingData = null;
     volatile private RoutingData routingData = null;
 
     private int failCount = 10;
     private int threadSleep = 5000;
+    private int waitingForFailover = 20000;
 
     public Routing(String nodeId) {
         initialNodes = new String[] { nodeId };
@@ -45,17 +47,21 @@ public final class Routing extends Thread {
                 String myHash = null;
                 String romaHash = getMklHash();
                 if (romaHash != null) {
-                    if (routingData != null) {
-                        synchronized(this){
-                            myHash = routingData.getMklHash("0");
+                    if (prevRoutingData != null) {
+                        String prevHash = prevRoutingData.getMklHash("0");
+                        if( romaHash.equals(prevHash) ) {
+                            Thread.sleep(waitingForFailover);
+                            prevRoutingData = null;
                         }
+                    }
+                    if (routingData != null) {
+                        myHash = routingData.getMklHash("0");
                     }
                     if (!romaHash.equals(myHash)) {
                         RoutingData buf = getRoutingDump();
                         if (buf != null) {
-                            synchronized(this){
-                                routingData = buf;
-                            }
+                            prevRoutingData = null; 
+                            routingData = buf;
                             synchronized (failCountMap) {
                                 failCountMap.clear();
                             }
@@ -87,9 +93,7 @@ public final class Routing extends Thread {
     public Connection getConnection(String key) throws Exception {
         String nid = null;
         try {
-            synchronized(this){
-                nid = routingData.getPrimaryNodeId(key);
-            }
+            nid = routingData.getPrimaryNodeId(key);
             log.debug("nid: " + nid);
             if (nid == null) {
                 log.error("getConnection() : can't get a primary node. key = "
@@ -133,10 +137,9 @@ public final class Routing extends Thread {
             if (n >= failCount) {
                 log.debug("failCount: failOver");
                 failCountMap.clear();
-                synchronized(this){
-                    routingData = routingData.failOver(nid);
-                }
-
+                prevRoutingData = routingData;
+                routingData = routingData.failOver(nid);
+                
                 // TODO : will close connections for fail node in connection
                 // pool.
 
