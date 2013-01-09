@@ -7,7 +7,7 @@ import com.rakuten.rit.roma.romac4j.pool.Connection;
 
 public class StringReceiver extends Receiver {
 
-    String str;
+    String str = null;
 
     @Override
     public void receive(Connection con) throws TimeoutException, IOException {

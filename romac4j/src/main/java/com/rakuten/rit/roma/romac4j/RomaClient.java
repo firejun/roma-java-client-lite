@@ -1,5 +1,6 @@
 package com.rakuten.rit.roma.romac4j;
 
+import java.text.ParseException;
 import java.util.Properties;
 
 import org.apache.log4j.BasicConfigurator;
@@ -64,13 +65,17 @@ public class RomaClient {
                 con.write(cmd, key, opt, value, casid);
                 rcv.receive(con);
                 routing.returnConnection(con);
-            } catch (Exception e1) {
-                log.error("Exception: " + e1.getMessage());
+            } catch (ParseException e) {
+                routing.returnConnection(con);
+                log.error("sendCmd(): " + e.getMessage());
+                throw new RuntimeException(e);
+            } catch (Exception e) {
+                log.error("sendCmd(): " + e.getMessage());
                 retry = true;
-                log.debug("rcv.retry: " + rcv.retry);
+                log.debug("sendCmd(): retry=" + rcv.retry);
                 routing.failCount(con);
                 if (++rcv.retry >= maxRetry) {
-                    log.error("RetryOutException");
+                    log.error("sendCmd(): RetryOutException");
                     throw new RetryOutException();
                 }
             }
@@ -142,10 +147,17 @@ public class RomaClient {
     public boolean cas(String key, int expt, Cas callback)
             throws RetryOutException {
         Receiver rcv = sendCmd(new ValueReceiver(), "gets", key, null, null);
+        int casid = 0;
+        try {
+            casid = ((ValueReceiver) rcv).getCasid();
+        } catch (ParseException e) {
+            log.error("cas() : " + e.getMessage());
+            return false;
+        }
         byte[] value = callback.cas((ValueReceiver) rcv);
 
         Receiver rcv2 = sendCmd(new StringReceiver(), "cas", key, "0 " + expt
-                + " " + value.length, value, ((ValueReceiver) rcv).getCasid());
+                + " " + value.length, value, casid);
         return rcv2.toString().equals("STORED");
     }
 }

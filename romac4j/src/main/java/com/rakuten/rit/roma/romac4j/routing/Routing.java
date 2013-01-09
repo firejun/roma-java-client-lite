@@ -25,7 +25,6 @@ public final class Routing extends Thread {
 
     private int failCount = 10;
     private int threadSleep = 5000;
-    private int waitingForFailover = 20000;
 
     public Routing(String nodeId) {
         initialNodes = new String[] { nodeId };
@@ -50,7 +49,7 @@ public final class Routing extends Thread {
                     if (prevRoutingData != null) {
                         String prevHash = prevRoutingData.getMklHash("0");
                         if (romaHash.equals(prevHash)) {
-                            Thread.sleep(waitingForFailover);
+                            Thread.sleep(threadSleep);
                             continue;
                         }
                     }
@@ -65,7 +64,7 @@ public final class Routing extends Thread {
                             synchronized (failCountMap) {
                                 failCountMap.clear();
                             }
-                            log.info("Routing has changed.");
+                            log.info("routing check thread : Routing has changed.");
                         }
                     }
                 }
@@ -94,7 +93,6 @@ public final class Routing extends Thread {
         String nid = null;
         try {
             nid = routingData.getPrimaryNodeId(key);
-            log.debug("nid: " + nid);
             if (nid == null) {
                 log.error("getConnection() : can't get a primary node. key = "
                         + key);
@@ -106,6 +104,7 @@ public final class Routing extends Thread {
             // fatal error : stop an application
             throw new RuntimeException("fatal : " + ex.getMessage());
         } catch (Exception ex2) {
+            // returns a dummy connection for failCount()
             return new Connection(nid);
         }
     }
@@ -118,26 +117,27 @@ public final class Routing extends Thread {
     }
 
     public void failCount(Connection con) {
+        if(con == null){
+            log.error("failCount(): got a null connection");
+            return;
+        }
         failCount(con.getNodeId());
+        con.forceClose();
     }
 
     public void failCount(String nid) {
         int n = 0;
         synchronized (failCountMap) {
-
             if (failCountMap.containsKey(nid)) {
                 n = failCountMap.get(nid);
             }
             n++;
             if (n >= failCount) {
-                log.info("failCount: failOver");
+                log.info("failCount(): failover");
                 failCountMap.clear();
                 prevRoutingData = routingData;
                 routingData = routingData.failOver(nid);
-
-                // TODO : will close connections for fail node in connection
-                // pool.
-
+                sps.deleteConnection(nid);
             } else {
                 failCountMap.put(nid, n);
             }
@@ -163,7 +163,6 @@ public final class Routing extends Thread {
         } catch (Exception e) {
             log.error("getMklHash() : " + e.getMessage());
             failCount(con);
-            con.forceClose();
             return null;
         }
         return rcv.toString();
@@ -187,7 +186,6 @@ public final class Routing extends Thread {
         } catch (Exception e) {
             log.warn("getRoutingDump() : " + e.getMessage());
             failCount(con);
-            con.forceClose();
             return null;
         }
         return routingData;

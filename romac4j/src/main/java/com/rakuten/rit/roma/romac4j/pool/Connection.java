@@ -98,21 +98,20 @@ public class Connection extends Socket {
         return new String(buff, 0, i);
     }
 
-    public byte[] readValue(int rtLen) {
+    public byte[] readValue(int rtLen) throws IOException {
         byte[] b = new byte[bufferSize];
         byte[] buff = new byte[rtLen + 7];
         byte[] result = new byte[rtLen];
         int receiveCount = 0;
         int count = 0;
-        try {
-            while (receiveCount < rtLen + 7) {
-                count = is.read(b, 0, bufferSize);
-                System.arraycopy(b, 0, buff, receiveCount, count);
-                receiveCount += count;
-            }
-            System.arraycopy(buff, 0, result, 0, rtLen);
-        } catch (IOException e) {
+
+        while (receiveCount < rtLen + 7) {
+            count = is.read(b, 0, bufferSize);
+            System.arraycopy(b, 0, buff, receiveCount, count);
+            receiveCount += count;
         }
+        System.arraycopy(buff, 0, result, 0, rtLen);
+        
         return result;
     }
 
@@ -121,7 +120,7 @@ public class Connection extends Socket {
             if (!this.isClosed())
                 this.close();
         } catch (IOException e) {
-            log.warn(e.getMessage());
+            log.warn("forceClose : " + e.getMessage());
         }
     }
 }
