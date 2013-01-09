@@ -1,9 +1,6 @@
 package com.rakuten.rit.roma.romac4j;
 
-import java.io.IOException;
-import java.net.ConnectException;
 import java.util.Properties;
-import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
@@ -58,7 +55,6 @@ public class RomaClient {
     protected Receiver sendCmd(Receiver rcv, String cmd, String key,
             String opt, byte[] value, int casid) throws RetryOutException {
         boolean retry;
-        
 
         do {
             retry = false;
@@ -73,11 +69,11 @@ public class RomaClient {
                 retry = true;
                 log.debug("rcv.retry: " + rcv.retry);
                 routing.failCount(con);
-                if (rcv.retry++ > maxRetry) {
+                if (++rcv.retry >= maxRetry) {
                     log.error("RetryOutException");
                     throw new RetryOutException();
                 }
-            } 
+            }
         } while (retry);
 
         return rcv;

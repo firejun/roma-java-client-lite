@@ -153,7 +153,6 @@ public class RoutingData {
         ArrayList<String> nodes = new ArrayList<String>();
         for(int i = 0; i < nodeId.length; i++){
             if( !nodeId[i].equals(rmnode) ){
-                log.debug("failOver : add node " + nodeId[i]);
                 nodes.add(nodeId[i]);
             }
         }
@@ -164,16 +163,13 @@ public class RoutingData {
         for(long vn : vNode.keySet()) {
             long clk = vClk.get(vn);
             nodes = new ArrayList<String>();
-            log.debug("failOver : vn = " + vn);
             for(String nid : vNode.get(vn)){
                 if( nid.equals(rmnode) ) {
                     clk ++;
                 } else {
                     nodes.add(nid);
-                    log.debug("failOver : add node to vNode " + nid);
                 }
-            }
-            log.debug("failOver : add node to vClk " + clk);           
+            }        
             ret.vNode.put(vn, nodes.toArray(new String[0]));
             ret.vClk.put(vn, clk);
         }
