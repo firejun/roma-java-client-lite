@@ -12,24 +12,23 @@ import org.apache.log4j.Logger;
 
 public class Connection extends Socket {
     protected static Logger log = Logger.getLogger(Connection.class.getName());
-    private String nodeId;
-    private byte[] sendCmd;
-    private InputStream is;
-    private int bufferSize;
+    private String nodeId = null;
+    private InputStream is = null;
+    private int bufferSize = 1024;
 
-    public Connection() {
-    }
-
-    public Connection(String nid) {
-        nodeId = nid;
+    public Connection(String nid, int bufferSize) {
+        this.nodeId = nid;
+        this.bufferSize = bufferSize;
     }
 
     public void write(String cmd, String key, String opt, byte[] value,
             int casid) throws TimeoutException, IOException {
-        String cmdBuff = null;
-        if (cmd != null && cmd.length() != 0) {
-            cmdBuff = cmd;
+        if (cmd == null || cmd.length() == 0) {
+            log.error("write() : cmd string is null or empty.");
+            // fatal error : stop an application
+            throw new IllegalArgumentException("fatal : cmd string is null or empty.");
         }
+        String cmdBuff = cmd;
 
         if (key != null && key.length() != 0) {
             cmdBuff += " " + key;
@@ -42,16 +41,14 @@ public class Connection extends Socket {
         if (casid != -1) {
             cmdBuff += " " + casid;
         }
-
         cmdBuff += "\r\n";
 
-        if (value != null && value.length != 0) {
+        byte[] sendCmd = null;
+        if (value != null) {
             sendCmd = new byte[cmdBuff.length() + value.length + 2];
-            System.arraycopy(cmdBuff.getBytes(), 0, sendCmd, 0,
-                    cmdBuff.length());
+            System.arraycopy(cmdBuff.getBytes(), 0, sendCmd, 0, cmdBuff.length());
             System.arraycopy(value, 0, sendCmd, cmdBuff.length(), value.length);
-            System.arraycopy("\r\n".getBytes(), 0, sendCmd, sendCmd.length - 2,
-                    2);
+            System.arraycopy("\r\n".getBytes(), 0, sendCmd, sendCmd.length - 2, 2);
         } else {
             sendCmd = cmdBuff.getBytes();
         }
@@ -68,14 +65,6 @@ public class Connection extends Socket {
         return nodeId;
     }
 
-    public void setNodeId(String nodeId) {
-        this.nodeId = nodeId;
-    }
-
-    public void setBufferSize(int bufferSize) {
-        this.bufferSize = bufferSize;
-    }
-
     public String readLine() throws IOException {
         byte[] b = new byte[1];
         byte[] buff = new byte[bufferSize];
@@ -83,7 +72,7 @@ public class Connection extends Socket {
         is = new BufferedInputStream(getInputStream());
         while (true) {
             if (i > bufferSize) {
-                log.error("Buffer overflow: bufferSize=" + bufferSize + " i=" + i);
+                log.error("readLine() : Buffer overflow bufferSize=" + bufferSize + " i=" + i);
                 throw new IOException("Too much receiveing data size.");
             }
             is.read(b, 0, 1);
@@ -120,7 +109,7 @@ public class Connection extends Socket {
             if (!this.isClosed())
                 this.close();
         } catch (IOException e) {
-            log.warn("forceClose : " + e.getMessage());
+            log.warn("forceClose() : " + e.getMessage());
         }
     }
 }

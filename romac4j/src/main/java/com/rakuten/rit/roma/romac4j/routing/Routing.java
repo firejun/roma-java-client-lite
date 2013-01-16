@@ -105,7 +105,7 @@ public final class Routing extends Thread {
             throw new RuntimeException("fatal : " + ex.getMessage());
         } catch (Exception ex2) {
             // returns a dummy connection for failCount()
-            return new Connection(nid);
+            return new Connection(nid, 0);
         }
     }
 

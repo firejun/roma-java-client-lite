@@ -6,17 +6,18 @@ import java.net.InetSocketAddress;
 import org.apache.commons.pool.PoolableObjectFactory;
 
 public class SocketPoolFactory implements PoolableObjectFactory<Connection> {
-    private String host;
-    private int port;
+    private String nodeId;
+    private int bufferSize;
 
-    public SocketPoolFactory(String host, int port) {
-        this.host = host;
-        this.port = port;
+    public SocketPoolFactory(String nid, int bufferSize) {
+        this.nodeId = nid;
+        this.bufferSize = bufferSize;
     }
 
     public Connection makeObject() throws IOException {
-        Connection con = new Connection();
-        con.connect(new InetSocketAddress(host, port));
+        Connection con = new Connection(nodeId, bufferSize);
+        String[] host = nodeId.split("_");
+        con.connect(new InetSocketAddress(host[0], Integer.valueOf(host[1])));
         return con;
     }
 
