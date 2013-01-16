@@ -20,14 +20,15 @@ public class ValueReceiver extends Receiver {
         str = con.readLine();
         if(str == null){
             log.error("receive() : first line is null.");
-            throw new IOException("first line is null.");
+            throw new IOException("receive() : first line is null.");
         }
         try {
             String[] header = str.split(" ");
             if (header.length >= 4) {
                 len = Integer.valueOf(header[3]);
             } else {
-                len = Integer.parseInt(str);
+                log.error("receive() : header format error [" + str + "]");
+                throw new ParseException(str, -1);
             }
         } catch (NumberFormatException e) {
             log.error("receive() : NumberFormatException [" + str + "] " + e.getMessage());

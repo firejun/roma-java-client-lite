@@ -1,15 +1,16 @@
 package com.rakuten.rit.roma.romac4j.routing;
 
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;
 
 import com.rakuten.rit.roma.romac4j.Receiver;
 import com.rakuten.rit.roma.romac4j.StringReceiver;
-import com.rakuten.rit.roma.romac4j.ValueReceiver;
 import com.rakuten.rit.roma.romac4j.pool.Connection;
 import com.rakuten.rit.roma.romac4j.pool.SocketPoolSingleton;
 
@@ -171,12 +172,12 @@ public final class Routing extends Thread {
     private RoutingData getRoutingDump() {
         Connection con = null;
         RoutingData routingData = null;
-        Receiver rcv = new ValueReceiver();
+        Receiver rcv = new RoutingReceiver();
         try {
             con = getConnection();
             con.write("routingdump bin");
             rcv.receive(con);
-            byte[] buff = ((ValueReceiver) rcv).getValue();
+            byte[] buff = ((RoutingReceiver) rcv).getValue();
             routingData = new RoutingData(buff);
             returnConnection(con);
         } catch (ParseException e) {
@@ -189,5 +190,34 @@ public final class Routing extends Thread {
             return null;
         }
         return routingData;
+    }
+    
+    private class RoutingReceiver extends Receiver {
+        private byte[] value = null;
+        
+        @Override
+        public void receive(Connection con) throws TimeoutException, IOException, ParseException {
+            int len = 0;
+            String str = con.readLine();
+            if(str == null){
+                log.error("RoutingReceiver.receive() : first line is null.");
+                throw new IOException("first line is null.");
+            }
+            try {
+                len = Integer.parseInt(str);
+            } catch (NumberFormatException e) {
+                log.error("RoutingReceiver.receive() : NumberFormatException [" + str + "] " + e.getMessage());
+                throw new ParseException(str, -1);
+            }
+            if (len > 0) {
+                value = con.readValue(len);
+            } else {
+                value = new byte[0];
+            }
+        }
+
+        public byte[] getValue() {
+            return value;
+        }
     }
 }
