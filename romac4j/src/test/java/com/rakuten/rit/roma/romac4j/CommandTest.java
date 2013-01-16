@@ -40,6 +40,9 @@ public class CommandTest extends TestCase {
         assertTrue(rc.set("testSetGet01", "testSetGet01-2".getBytes(), 0));
         value = new String(rc.get("testSetGet01"));
         assertEquals("testSetGet01-2", value);
+        assertTrue(rc.set("testSetGet01", "".getBytes(), 0));
+        value = new String(rc.get("testSetGet01"));
+        assertEquals("", value);        
     }
 
     public void testAppend01() throws Exception {
