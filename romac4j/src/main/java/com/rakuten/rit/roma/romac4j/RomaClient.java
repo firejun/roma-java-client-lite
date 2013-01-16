@@ -27,7 +27,6 @@ public class RomaClient {
             sps.setEnv(Integer.parseInt(props.getProperty("maxActive")),
                     Integer.parseInt(props.getProperty("maxIdle")),
                     Integer.parseInt(props.getProperty("timeout")),
-                    Integer.parseInt(props.getProperty("expTimeout")),
                     Integer.parseInt(props.getProperty("bufferSize")));
             maxRetry = Integer.parseInt(props.getProperty("maxRetry"));
             log.debug("maxRetry: " + maxRetry);
@@ -40,7 +39,7 @@ public class RomaClient {
             routing.start();
             Thread.sleep(1000);
         } catch (Exception e) {
-            log.error("Main Error.");
+            log.error("RomaClient() : " + e.getMessage());
         }
     }
 
