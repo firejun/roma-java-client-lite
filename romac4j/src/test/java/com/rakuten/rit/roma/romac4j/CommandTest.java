@@ -1,5 +1,7 @@
 package com.rakuten.rit.roma.romac4j;
 
+import com.rakuten.rit.roma.romac4j.utils.PropertiesUtils;
+
 import junit.extensions.TestSetup;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -9,7 +11,7 @@ public class CommandTest extends TestCase {
     static RomaClient rc = null;
 
     static void oneTimeSetUp() throws Exception {
-        rc = new RomaClient();
+        rc = new RomaClient(PropertiesUtils.getRomaClientProperties());
     }
 
     static void oneTimeTearDown() throws Exception {

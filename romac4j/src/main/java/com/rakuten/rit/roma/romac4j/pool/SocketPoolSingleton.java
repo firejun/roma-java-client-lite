@@ -12,29 +12,41 @@ import org.apache.log4j.Logger;
 public class SocketPoolSingleton {
     protected static Logger log = Logger.getLogger(SocketPoolSingleton.class
             .getName());
-    private static SocketPoolSingleton instance = new SocketPoolSingleton();
+    private static SocketPoolSingleton instance = null;
 
     private SocketPoolSingleton() {
         poolMap = Collections.synchronizedMap(new HashMap<String, GenericObjectPool<Connection>>());
     }
 
     public static SocketPoolSingleton getInstance() {
+        if(instance == null) {
+            log.error("getInstance() : Pool has not been yet initialized.");
+            throw new RuntimeException("Pool has not been yet initialized.");
+        }
         return instance;
     }
 
-    private GenericObjectPool.Config config;
-    private Map<String, GenericObjectPool<Connection>> poolMap;
-    private int timeout;
-    private int bufferSize;
+    private Map<String, GenericObjectPool<Connection>> poolMap = null;
+    private int maxActive = GenericObjectPool.DEFAULT_MAX_ACTIVE;
+    private int maxIdle = GenericObjectPool.DEFAULT_MAX_IDLE;
+    private int timeout = 1000;
+    private int bufferSize = 1024;
 
-    public void setEnv(int maxActive, int maxIdle, int timeout, int bufferSize) {
-        config = new GenericObjectPool.Config();
-        config.maxActive = maxActive;
-        config.maxIdle = maxIdle;
-        config.whenExhaustedAction = GenericObjectPool.WHEN_EXHAUSTED_GROW;
-        //config.testOnBorrow = true;
-        this.timeout = timeout;
-        this.bufferSize = bufferSize;
+    public static synchronized void init() {
+        init(GenericObjectPool.DEFAULT_MAX_ACTIVE,
+                GenericObjectPool.DEFAULT_MAX_IDLE, 1000, 1024);
+    }
+    
+    public static synchronized void init(int maxActive, int maxIdle, int timeout, int bufferSize) {
+        if(instance != null) {
+            log.error("init() : init() was already called.");
+            throw new RuntimeException("init() was already called.");
+        }
+        instance = new SocketPoolSingleton();
+        instance.maxActive = maxActive;
+        instance.maxIdle = maxIdle;
+        instance.timeout = timeout;
+        instance.bufferSize = bufferSize;
     }
 
     public synchronized Connection getConnection(String nodeId) throws Exception {
@@ -42,7 +54,10 @@ public class SocketPoolSingleton {
         if (pool == null) {
             PoolableObjectFactory<Connection> factory = 
                     new SocketPoolFactory(nodeId, bufferSize);
-            pool = new GenericObjectPool<Connection>(factory, config);
+            pool = new GenericObjectPool<Connection>(factory);
+            pool.setMaxActive(maxActive);
+            pool.setMaxIdle(maxIdle);
+            pool.setWhenExhaustedAction(GenericObjectPool.WHEN_EXHAUSTED_GROW);
             poolMap.put(nodeId, pool);
         }
         Connection con = pool.borrowObject();

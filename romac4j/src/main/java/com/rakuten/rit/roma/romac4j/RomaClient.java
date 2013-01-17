@@ -9,36 +9,56 @@ import org.apache.log4j.Logger;
 import com.rakuten.rit.roma.romac4j.pool.Connection;
 import com.rakuten.rit.roma.romac4j.pool.SocketPoolSingleton;
 import com.rakuten.rit.roma.romac4j.routing.Routing;
-import com.rakuten.rit.roma.romac4j.utils.PropertiesUtils;
 
 public class RomaClient {
     protected static Logger log = Logger.getLogger(RomaClient.class.getName());
-    private SocketPoolSingleton sps = SocketPoolSingleton.getInstance();
-    private Routing routing;
-    private int maxRetry;
+    private Routing routing = null;
+    private int maxRetry = 5;
 
-    public RomaClient() {
+    public RomaClient(Properties props) {
         BasicConfigurator.configure();
-        log.debug("Init Section.");
 
-        try {
-            // Set properties values
-            Properties props = PropertiesUtils.getRomaClientProperties();
-            sps.setEnv(Integer.parseInt(props.getProperty("maxActive")),
+        try{
+            SocketPoolSingleton.getInstance();
+        }catch(RuntimeException e){
+            SocketPoolSingleton.init(
+                    Integer.parseInt(props.getProperty("maxActive")),
                     Integer.parseInt(props.getProperty("maxIdle")),
                     Integer.parseInt(props.getProperty("timeout")),
                     Integer.parseInt(props.getProperty("bufferSize")));
-            maxRetry = Integer.parseInt(props.getProperty("maxRetry"));
-            log.debug("maxRetry: " + maxRetry);
+            log.warn("RomaClient() : SocketPool initialized in RomaClient().");
+        }
+        
+        maxRetry = Integer.parseInt(props.getProperty("maxRetry"));
+        
+        routing = new Routing(props.getProperty("address_port"));
+        routing.setFailCount(Integer.parseInt(props.getProperty("failCount")));
+        routing.setThreadSleep(Integer.parseInt(props.getProperty("threadSleep")));
+        routing.start();
 
-            routing = new Routing(props.getProperty("address_port"));
-            routing.setFailCount(Integer.parseInt(props
-                    .getProperty("failCount")));
-            routing.setThreadSleep(Integer.parseInt(props
-                    .getProperty("threadSleep")));
-            routing.start();
+        try {
             Thread.sleep(1000);
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
+            log.error("RomaClient() : " + e.getMessage());
+        }
+   }
+    
+    public RomaClient(String nodeId) {
+        BasicConfigurator.configure();
+
+        try{
+            SocketPoolSingleton.getInstance();
+        }catch(RuntimeException e){
+            SocketPoolSingleton.init();
+            log.warn("RomaClient() : SocketPool initialized in RomaClient().");
+        }
+        
+        routing = new Routing(nodeId);
+        routing.start();
+        
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
             log.error("RomaClient() : " + e.getMessage());
         }
     }
@@ -47,6 +67,18 @@ public class RomaClient {
         routing.stopThread();
     }
 
+    public void setMaxRetry(int n) {
+        maxRetry = n;
+    }
+    
+    public void setFailCount(int n) {
+        routing.setFailCount(n);
+    }
+    
+    public void setThreadSleep(int n) {
+        routing.setThreadSleep(n);
+    }
+    
     protected Receiver sendCmd(Receiver rcv, String cmd, String key,
             String opt, byte[] value) throws RetryOutException {
         return sendCmd(rcv, cmd, key, opt, value, -1);
