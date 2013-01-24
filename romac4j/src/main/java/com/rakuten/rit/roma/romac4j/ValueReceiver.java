@@ -6,7 +6,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;
 
-import com.rakuten.rit.roma.romac4j.pool.Connection;
+import com.rakuten.rit.roma.romac4j.connection.Connection;
 
 public class ValueReceiver extends Receiver {
     protected static Logger log = Logger.getLogger(ValueReceiver.class

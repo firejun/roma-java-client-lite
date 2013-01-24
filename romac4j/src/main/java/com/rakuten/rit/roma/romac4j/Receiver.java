@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.concurrent.TimeoutException;
 
-import com.rakuten.rit.roma.romac4j.pool.Connection;
+import com.rakuten.rit.roma.romac4j.connection.Connection;
 
 public abstract class Receiver {
     public int retry = 0;

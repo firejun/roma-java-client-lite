@@ -1,4 +1,4 @@
-package com.rakuten.rit.roma.romac4j.pool;
+package com.rakuten.rit.roma.romac4j.connection;
 
 import java.net.SocketException;
 import java.util.Collections;
@@ -9,16 +9,16 @@ import org.apache.commons.pool.PoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.apache.log4j.Logger;
 
-public class SocketPoolSingleton {
-    protected static Logger log = Logger.getLogger(SocketPoolSingleton.class
+public class RomaSocketPool {
+    protected static Logger log = Logger.getLogger(RomaSocketPool.class
             .getName());
-    private static SocketPoolSingleton instance = null;
+    private static RomaSocketPool instance = null;
 
-    private SocketPoolSingleton() {
+    private RomaSocketPool() {
         poolMap = Collections.synchronizedMap(new HashMap<String, GenericObjectPool<Connection>>());
     }
 
-    public static SocketPoolSingleton getInstance() {
+    public static RomaSocketPool getInstance() {
         if(instance == null) {
             log.error("getInstance() : Pool has not been yet initialized.");
             throw new RuntimeException("Pool has not been yet initialized.");
@@ -42,7 +42,7 @@ public class SocketPoolSingleton {
             log.error("init() : init() was already called.");
             throw new RuntimeException("init() was already called.");
         }
-        instance = new SocketPoolSingleton();
+        instance = new RomaSocketPool();
         instance.maxActive = maxActive;
         instance.maxIdle = maxIdle;
         instance.timeout = timeout;
