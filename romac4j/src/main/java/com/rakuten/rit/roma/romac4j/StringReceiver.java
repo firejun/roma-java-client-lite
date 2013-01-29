@@ -3,7 +3,7 @@ package com.rakuten.rit.roma.romac4j;
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
-import com.rakuten.rit.roma.romac4j.pool.Connection;
+import com.rakuten.rit.roma.romac4j.connection.Connection;
 
 public class StringReceiver extends Receiver {
 

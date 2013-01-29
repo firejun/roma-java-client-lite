@@ -1,4 +1,4 @@
-package com.rakuten.rit.roma.romac4j.pool;
+package com.rakuten.rit.roma.romac4j.connection;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

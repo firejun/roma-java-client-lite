@@ -3,13 +3,12 @@ import org.apache.log4j.Logger;
 import com.rakuten.rit.roma.romac4j.Cas;
 import com.rakuten.rit.roma.romac4j.RomaClient;
 import com.rakuten.rit.roma.romac4j.ValueReceiver;
-import com.rakuten.rit.roma.romac4j.utils.PropertiesUtils;
 
 public class Start {
     protected static Logger log = Logger.getLogger(Start.class.getName());
     
     public static void main(String argv[]) throws Exception {
-        RomaClient rc = new RomaClient(PropertiesUtils.getRomaClientProperties());
+        RomaClient rc = new RomaClient("localhost_11211");
         byte[] b = null;
         rc.set("foo", "test1".getBytes(), 0);
 

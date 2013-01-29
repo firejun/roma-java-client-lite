@@ -11,12 +11,12 @@ import org.apache.log4j.Logger;
 
 import com.rakuten.rit.roma.romac4j.Receiver;
 import com.rakuten.rit.roma.romac4j.StringReceiver;
-import com.rakuten.rit.roma.romac4j.pool.Connection;
-import com.rakuten.rit.roma.romac4j.pool.SocketPoolSingleton;
+import com.rakuten.rit.roma.romac4j.connection.Connection;
+import com.rakuten.rit.roma.romac4j.connection.RomaSocketPool;
 
 public final class Routing extends Thread {
     protected static Logger log = Logger.getLogger(Routing.class.getName());
-    private SocketPoolSingleton sps = SocketPoolSingleton.getInstance();
+    private RomaSocketPool sps = RomaSocketPool.getInstance();
     private Random rnd = new Random(System.currentTimeMillis());
     private String[] initialNodes = null;
     private HashMap<String, Integer> failCountMap = new HashMap<String, Integer>();
