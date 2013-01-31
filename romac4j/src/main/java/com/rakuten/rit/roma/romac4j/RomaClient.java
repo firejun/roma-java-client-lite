@@ -3,88 +3,17 @@ package com.rakuten.rit.roma.romac4j;
 import java.io.IOException;
 import java.text.ParseException;
 
-import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 
-import com.rakuten.rit.roma.romac4j.connection.Connection;
-import com.rakuten.rit.roma.romac4j.connection.RomaSocketPool;
-import com.rakuten.rit.roma.romac4j.routing.Routing;
-
-public class RomaClient {
+public class RomaClient extends ClientObject {
     protected static Logger log = Logger.getLogger(RomaClient.class.getName());
-    private Routing routing = null;
-    private int maxRetry = 5;
-    
+
+    public RomaClient(ClientObject obj) {
+        super(obj);
+    }
+
     public RomaClient(String nodeId) {
-        BasicConfigurator.configure();
-
-        try{
-            RomaSocketPool.getInstance();
-        }catch(RuntimeException e){
-            RomaSocketPool.init();
-            log.warn("RomaClient() : SocketPool initialized in RomaClient().");
-        }
-        
-        routing = new Routing(nodeId);
-        routing.start();
-        
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            log.error("RomaClient() : " + e.getMessage());
-        }
-    }
-
-    public void destroy() {
-        routing.stopThread();
-    }
-
-    public void setMaxRetry(int n) {
-        maxRetry = n;
-    }
-    
-    public void setFailCount(int n) {
-        routing.setFailCount(n);
-    }
-    
-    public void setThreadSleep(int n) {
-        routing.setThreadSleep(n);
-    }
-    
-    protected Receiver sendCmd(Receiver rcv, String cmd, String key,
-            String opt, byte[] value) throws IOException {
-        return sendCmd(rcv, cmd, key, opt, value, -1);
-    }
-
-    protected Receiver sendCmd(Receiver rcv, String cmd, String key,
-            String opt, byte[] value, int casid) throws IOException {
-        boolean retry;
-
-        do {
-            retry = false;
-            Connection con = null;
-            try {
-                con = routing.getConnection(key);
-                con.write(cmd, key, opt, value, casid);
-                rcv.receive(con);
-                routing.returnConnection(con);
-            } catch (ParseException e) {
-                routing.returnConnection(con);
-                log.error("sendCmd(): " + e.getMessage());
-                throw new RuntimeException(e);
-            } catch (Exception e) {
-                log.error("sendCmd(): " + e.getMessage());
-                retry = true;
-                log.debug("sendCmd(): retry=" + rcv.retry);
-                routing.failCount(con);
-                if (++rcv.retry >= maxRetry) {
-                    log.error("sendCmd(): Retry out");
-                    throw new IOException("Retry out", e);
-                }
-            }
-        } while (retry);
-
-        return rcv;
+        super(nodeId);
     }
 
     public byte[] get(String key) throws IOException {
@@ -92,11 +21,15 @@ public class RomaClient {
         return ((ValueReceiver) rcv).getValue();
     }
 
-    public String getstr(String key) throws IOException {
+    public String getString(String key) throws IOException {
         Receiver rcv = sendCmd(new ValueReceiver(), "get", key, null, null);
-        return ((ValueReceiver) rcv).getValue().toString();
+        return ((ValueReceiver) rcv).getValueString();
     }
 
+    public byte[][] gets(String[] keys) throws IOException {
+        return null;
+    }
+    
     private boolean set(String cmd, String key, byte[] value, int expt)
             throws IOException {
         Receiver rcv = sendCmd(new StringReceiver(), cmd, key, "0 " + expt
