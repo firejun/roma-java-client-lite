@@ -27,7 +27,7 @@ public class ClientObject {
             RomaSocketPool.getInstance();
         }catch(RuntimeException e){
             RomaSocketPool.init();
-            log.warn("RomaClient() : SocketPool initialized in RomaClient().");
+            log.warn("ClientObject() : SocketPool initialized in RomaClient().");
         }
         
         routing = new Routing(nodeId);
@@ -36,7 +36,7 @@ public class ClientObject {
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
-            log.error("RomaClient() : " + e.getMessage());
+            log.error("ClientObject() : " + e.getMessage());
         }
     }
     
