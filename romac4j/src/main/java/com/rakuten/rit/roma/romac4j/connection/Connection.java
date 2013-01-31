@@ -15,6 +15,7 @@ public class Connection extends Socket {
     protected static Logger log = Logger.getLogger(Connection.class.getName());
     private String nodeId = null;
     private InputStream is = null;
+    private OutputStream os = null;
     private int bufferSize = 1024;
 
     public Connection(String nid, int bufferSize) {
@@ -26,6 +27,7 @@ public class Connection extends Socket {
     public void connect(SocketAddress endpoint) throws IOException {
         super.connect(endpoint);
         is = new BufferedInputStream(getInputStream());
+        os = new BufferedOutputStream(getOutputStream());
     }
     
     public void write(String cmd, String key, String opt, byte[] value,
@@ -36,7 +38,6 @@ public class Connection extends Socket {
             throw new IllegalArgumentException("fatal : cmd string is null or empty.");
         }
         String cmdBuff = cmd;
-
         if (key != null && key.length() != 0) {
             cmdBuff += " " + key;
         }
@@ -50,17 +51,11 @@ public class Connection extends Socket {
         }
         cmdBuff += "\r\n";
 
-        byte[] sendCmd = null;
+        os.write(cmdBuff.getBytes());
         if (value != null) {
-            sendCmd = new byte[cmdBuff.length() + value.length + 2];
-            System.arraycopy(cmdBuff.getBytes(), 0, sendCmd, 0, cmdBuff.length());
-            System.arraycopy(value, 0, sendCmd, cmdBuff.length(), value.length);
-            System.arraycopy("\r\n".getBytes(), 0, sendCmd, sendCmd.length - 2, 2);
-        } else {
-            sendCmd = cmdBuff.getBytes();
+            os.write(value);
+            os.write("\r\n".getBytes());
         }
-        OutputStream os = new BufferedOutputStream(getOutputStream());
-        os.write(sendCmd);
         os.flush();
     }
 
@@ -73,25 +68,18 @@ public class Connection extends Socket {
     }
 
     public String readLine() throws IOException {
-        byte[] b = new byte[1];
         byte[] buff = new byte[bufferSize];
-        int i = 0;
+        int b, i = 0;
 
-        while (true) {
-            if (i > bufferSize) {
-                log.error("readLine() : Buffer overflow bufferSize=" + bufferSize + " i=" + i);
-                throw new IOException("Too much receiveing data size.");
+        while (i < bufferSize) {
+            if ((b = is.read()) == 0x0d) {
+                if ((b = is.read()) == 0x0a)
+                    return new String(buff, 0, i);
             }
-            is.read(b, 0, 1);
-            if (b[0] == 0x0d) {
-                is.read(b, 0, 1);
-                if (b[0] == 0x0a)
-                    break;
-            }
-            buff[i] = b[0];
-            i++;
+            buff[i++] = (byte)b;
         }
-        return new String(buff, 0, i);
+        log.error("readLine() : Buffer overflow bufferSize=" + bufferSize + " i=" + i);
+        throw new IOException("Too much receiveing data size.");
     }
 
     public byte[] read(int n) throws IOException {
