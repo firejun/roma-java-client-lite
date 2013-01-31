@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;
@@ -21,6 +22,12 @@ public class Connection extends Socket {
         this.bufferSize = bufferSize;
     }
 
+    @Override
+    public void connect(SocketAddress endpoint) throws IOException {
+        super.connect(endpoint);
+        is = new BufferedInputStream(getInputStream());
+    }
+    
     public void write(String cmd, String key, String opt, byte[] value,
             int casid) throws TimeoutException, IOException {
         if (cmd == null || cmd.length() == 0) {
@@ -69,7 +76,7 @@ public class Connection extends Socket {
         byte[] b = new byte[1];
         byte[] buff = new byte[bufferSize];
         int i = 0;
-        is = new BufferedInputStream(getInputStream());
+
         while (true) {
             if (i > bufferSize) {
                 log.error("readLine() : Buffer overflow bufferSize=" + bufferSize + " i=" + i);
@@ -87,20 +94,20 @@ public class Connection extends Socket {
         return new String(buff, 0, i);
     }
 
-    public byte[] readValue(int rtLen) throws IOException {
-        byte[] b = new byte[bufferSize];
-        byte[] buff = new byte[rtLen + 7];
-        byte[] result = new byte[rtLen];
-        int receiveCount = 0;
-        int count = 0;
-
-        while (receiveCount < rtLen + 7) {
-            count = is.read(b, 0, bufferSize);
-            System.arraycopy(b, 0, buff, receiveCount, count);
-            receiveCount += count;
-        }
-        System.arraycopy(buff, 0, result, 0, rtLen);
+    public byte[] read(int n) throws IOException {
+        byte[] ret = new byte[n];
+        int off = 0, cnt = 0;
         
+        while ((n -= cnt) > 0) {
+            cnt = is.read(ret, off, n);
+            off += cnt;
+        }
+        return ret;
+    }
+    
+    public byte[] readValue(int n) throws IOException {
+        byte[] result = read(n);
+        read(2); // "\r\n"
         return result;
     }
 

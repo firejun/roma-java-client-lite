@@ -211,6 +211,7 @@ public final class Routing extends Thread {
             }
             if (len > 0) {
                 value = con.readValue(len);
+                con.readLine(); // "END\r\n"
             } else {
                 value = new byte[0];
             }

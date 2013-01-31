@@ -37,6 +37,7 @@ public class ValueReceiver extends Receiver {
 
         if (len > 0) {
             value = con.readValue(len);
+            con.readLine(); // "END\r\n"
         } else {
             value = new byte[0];
         }
@@ -46,6 +47,10 @@ public class ValueReceiver extends Receiver {
         return value;
     }
 
+    public String getValueString() {
+        return new String(value);
+    }
+    
     public int getCasid() throws ParseException {
         if(str == null){
             log.warn("getCasid() : first line is null.");
