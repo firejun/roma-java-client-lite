@@ -47,8 +47,6 @@ public class RomaClient extends ClientObject {
         if(rcv == null) return null;
         
         int len = rcv.size();
-        if(len == 0) return null;
-        
         HashMap<String, byte[]> ret = new HashMap<String, byte[]>();
         for(int i = 0; i < len; i++){
             String key = rcv.getHeader(i).split(" ")[1];    // VALUE <key> <bytes> [<cas unique>]\r\n
@@ -62,8 +60,6 @@ public class RomaClient extends ClientObject {
         if(rcv == null) return null;
         
         int len = rcv.size();
-        if(len == 0) return null;
-        
         HashMap<String, String> ret = new HashMap<String, String>();
         for(int i = 0; i < len; i++){
             String key = rcv.getHeader(i).split(" ")[1];    // VALUE <key> <bytes> [<cas unique>]\r\n
@@ -145,6 +141,7 @@ public class RomaClient extends ClientObject {
 
     public boolean cas(String key, int expt, Cas callback) throws IOException {
         ValueReceiver rcv = sendCmdV("gets", key);
+        if(rcv.getValue() == null) return false;
         int casid = 0;
         try {
             casid = ((ValueReceiver) rcv).getCasid();
