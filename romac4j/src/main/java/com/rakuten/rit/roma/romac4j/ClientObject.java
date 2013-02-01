@@ -55,10 +55,35 @@ public class ClientObject {
     public void setThreadSleep(int n) {
         routing.setThreadSleep(n);
     }
+
+    protected StringReceiver sendCmdS(String cmd, String key)
+            throws IOException {
+        return (StringReceiver)sendCmd(new StringReceiver(), cmd, key, null, null, -1);
+    }
+
+    protected StringReceiver sendCmdS(String cmd, String key, String opt)
+            throws IOException {
+        return (StringReceiver)sendCmd(new StringReceiver(), cmd, key, opt, null, -1);
+    }
+
+    protected StringReceiver sendCmdS(String cmd, String key, String opt, byte[] value)
+            throws IOException {
+        return (StringReceiver)sendCmd(new StringReceiver(), cmd, key, opt, value, -1);
+    }
+
+    protected StringReceiver sendCmdS(String cmd, String key, String opt, byte[] value, int casid)
+            throws IOException {
+        return (StringReceiver)sendCmd(new StringReceiver(), cmd, key, opt, value, casid);
+    }
+
+    protected ValueReceiver sendCmdV(String cmd, String key)
+            throws IOException {
+        return (ValueReceiver)sendCmd(new ValueReceiver(), cmd, key, null, null, -1);
+    }
     
-    protected Receiver sendCmd(Receiver rcv, String cmd, String key,
-            String opt, byte[] value) throws IOException {
-        return sendCmd(rcv, cmd, key, opt, value, -1);
+    protected ValueReceiver sendCmdV(String cmd, String key, String opt)
+            throws IOException {
+        return (ValueReceiver)sendCmd(new ValueReceiver(), cmd, key, opt, null, -1);
     }
 
     protected Receiver sendCmd(Receiver rcv, String cmd, String key,

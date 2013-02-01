@@ -19,19 +19,17 @@ public class RomaClient extends ClientObject {
     }
 
     public byte[] get(String key) throws IOException {
-        Receiver rcv = sendCmd(new ValueReceiver(), "get", key, null, null);
-        return ((ValueReceiver) rcv).getValue();
+        return sendCmdV("get", key).getValue();
     }
 
     public String getString(String key) throws IOException {
-        Receiver rcv = sendCmd(new ValueReceiver(), "get", key, null, null);
-        return ((ValueReceiver) rcv).getValueString();
+        return sendCmdV("get", key).getValueString();
     }
 
     private ValueReceiver sendGetsCommand(String[] keys) throws IOException {
         if(keys == null || keys.length == 0) return null;
         if(keys.length == 1){
-            return (ValueReceiver)sendCmd(new ValueReceiver(), "get", keys[0], null, null);
+            return sendCmdV("get", keys[0]);
         }
         String key = keys[0];
         String opt = keys[1];
@@ -41,9 +39,8 @@ public class RomaClient extends ClientObject {
             }
             opt += " " + keys[i];
         }
-        return (ValueReceiver)sendCmd(new ValueReceiver(), "gets", key, opt, null);
+        return sendCmdV("gets", key, opt);
     }
-    
     
     public Map<String, byte[]> gets(String[] keys) throws IOException {
         ValueReceiver rcv = sendGetsCommand(keys);
@@ -77,9 +74,7 @@ public class RomaClient extends ClientObject {
     
     private boolean set(String cmd, String key, byte[] value, int expt)
             throws IOException {
-        Receiver rcv = sendCmd(new StringReceiver(), cmd, key, "0 " + expt
-                + " " + value.length, value);
-        return rcv.toString().equals("STORED");
+        return sendCmdS(cmd, key, "0 " + expt + " " + value.length, value).isStroed();
     }
 
     public boolean set(String key, byte[] value, int expt)
@@ -88,7 +83,7 @@ public class RomaClient extends ClientObject {
     }
     
     public boolean set(String key, String value, int expt)
-        throws IOException {
+            throws IOException {
         return set("set", key, value.getBytes(), expt);        
     }
 
@@ -133,31 +128,23 @@ public class RomaClient extends ClientObject {
     }
 
     public boolean incr(String key, int value) throws IOException {
-        Receiver rcv = sendCmd(new StringReceiver(), "incr", key, "" + value,
-                null);
-        return rcv.toString().equals("STORED");
+        return sendCmdS("incr", key, "" + value).isStroed();
     }
 
     public boolean decr(String key, int value) throws IOException {
-        Receiver rcv = sendCmd(new StringReceiver(), "decr", key, "" + value,
-                null);
-        return rcv.toString().equals("STORED");
+        return sendCmdS("decr", key, "" + value).isStroed();
     }
 
     public boolean delete(String key) throws IOException {
-        Receiver rcv = sendCmd(new StringReceiver(), "delete", key, null, null);
-        return rcv.toString().equals("DELETED");
+        return sendCmdS("delete", key).isDeleted();
     }
 
     public boolean setExpt(String key, int expt) throws IOException {
-        Receiver rcv = sendCmd(new StringReceiver(), "set_expt", key,
-                "" + expt, null);
-        return rcv.toString().equals("STORED");
+        return sendCmdS("set_expt", key, "" + expt).isStroed();
     }
 
-    public boolean cas(String key, int expt, Cas callback)
-            throws IOException {
-        Receiver rcv = sendCmd(new ValueReceiver(), "gets", key, null, null);
+    public boolean cas(String key, int expt, Cas callback) throws IOException {
+        ValueReceiver rcv = sendCmdV("gets", key);
         int casid = 0;
         try {
             casid = ((ValueReceiver) rcv).getCasid();
@@ -165,10 +152,9 @@ public class RomaClient extends ClientObject {
             log.error("cas() : " + e.getMessage());
             return false;
         }
-        byte[] value = callback.cas((ValueReceiver) rcv);
+        byte[] value = callback.cas(rcv);
 
-        Receiver rcv2 = sendCmd(new StringReceiver(), "cas", key, "0 " + expt
-                + " " + value.length, value, casid);
-        return rcv2.toString().equals("STORED");
+        return sendCmdS("cas", key,
+                "0 " + expt + " " + value.length, value, casid).isStroed();
     }
 }

@@ -17,4 +17,13 @@ public class StringReceiver extends Receiver {
     public String toString() {
         return str;
     }
+    
+    public boolean isStroed() {
+        return str.equals("STORED");
+    }
+    
+    public boolean isDeleted() {
+        return str.equals("DELETED");
+    }
+
 }
