@@ -37,10 +37,11 @@ public class ValueReceiver extends Receiver {
             throw new ParseException(str, -1);
         }
         
-        if (len > 0) {
+        if (len >= 0) {
             values.add(con.readValue(len));
         } else {
-            values.add(new byte[0]);
+            log.error("receive() : header format error [" + str + "]");
+            throw new ParseException(str, -1);
         }
         return true;
     }
