@@ -74,6 +74,22 @@ public class ValueReceiver extends Receiver {
         return new String(v);
     }
 
+    public int getValueInt() {
+        return getValueInt(0);
+    }
+    
+    public int getValueInt(int n) {
+        return Integer.parseInt(getValueString(n));
+    }
+ 
+    public long getValueLong() {
+        return getValueLong(0);
+    }
+    
+    public long getValueLong(int n) {
+        return Long.parseLong(getValueString(n));
+    }
+ 
     public String getHeader() {
         return getHeader(0);
     }

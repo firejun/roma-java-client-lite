@@ -80,10 +80,15 @@ public class ClientObject {
             throws IOException {
         return (ValueReceiver)sendCmd(new ValueReceiver(), cmd, key, null, null, -1);
     }
-    
+
     protected ValueReceiver sendCmdV(String cmd, String key, String opt)
             throws IOException {
         return (ValueReceiver)sendCmd(new ValueReceiver(), cmd, key, opt, null, -1);
+    }
+
+    protected ValueReceiver sendCmdV(String cmd, String key, String opt, byte[] value)
+            throws IOException {
+        return (ValueReceiver)sendCmd(new ValueReceiver(), cmd, key, opt, value, -1);
     }
 
     protected Receiver sendCmd(Receiver rcv, String cmd, String key,
