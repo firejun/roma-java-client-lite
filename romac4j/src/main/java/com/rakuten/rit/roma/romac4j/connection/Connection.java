@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;
@@ -14,6 +15,7 @@ public class Connection extends Socket {
     protected static Logger log = Logger.getLogger(Connection.class.getName());
     private String nodeId = null;
     private InputStream is = null;
+    private OutputStream os = null;
     private int bufferSize = 1024;
 
     public Connection(String nid, int bufferSize) {
@@ -21,6 +23,13 @@ public class Connection extends Socket {
         this.bufferSize = bufferSize;
     }
 
+    @Override
+    public void connect(SocketAddress endpoint) throws IOException {
+        super.connect(endpoint);
+        is = new BufferedInputStream(getInputStream());
+        os = new BufferedOutputStream(getOutputStream());
+    }
+    
     public void write(String cmd, String key, String opt, byte[] value,
             int casid) throws TimeoutException, IOException {
         if (cmd == null || cmd.length() == 0) {
@@ -29,7 +38,6 @@ public class Connection extends Socket {
             throw new IllegalArgumentException("fatal : cmd string is null or empty.");
         }
         String cmdBuff = cmd;
-
         if (key != null && key.length() != 0) {
             cmdBuff += " " + key;
         }
@@ -43,17 +51,11 @@ public class Connection extends Socket {
         }
         cmdBuff += "\r\n";
 
-        byte[] sendCmd = null;
+        os.write(cmdBuff.getBytes());
         if (value != null) {
-            sendCmd = new byte[cmdBuff.length() + value.length + 2];
-            System.arraycopy(cmdBuff.getBytes(), 0, sendCmd, 0, cmdBuff.length());
-            System.arraycopy(value, 0, sendCmd, cmdBuff.length(), value.length);
-            System.arraycopy("\r\n".getBytes(), 0, sendCmd, sendCmd.length - 2, 2);
-        } else {
-            sendCmd = cmdBuff.getBytes();
+            os.write(value);
+            os.write("\r\n".getBytes());
         }
-        OutputStream os = new BufferedOutputStream(getOutputStream());
-        os.write(sendCmd);
         os.flush();
     }
 
@@ -66,41 +68,34 @@ public class Connection extends Socket {
     }
 
     public String readLine() throws IOException {
-        byte[] b = new byte[1];
         byte[] buff = new byte[bufferSize];
-        int i = 0;
-        is = new BufferedInputStream(getInputStream());
-        while (true) {
-            if (i > bufferSize) {
-                log.error("readLine() : Buffer overflow bufferSize=" + bufferSize + " i=" + i);
-                throw new IOException("Too much receiveing data size.");
+        int b, i = 0;
+
+        while (i < bufferSize) {
+            if ((b = is.read()) == 0x0d) {
+                if ((b = is.read()) == 0x0a)
+                    return new String(buff, 0, i);
             }
-            is.read(b, 0, 1);
-            if (b[0] == 0x0d) {
-                is.read(b, 0, 1);
-                if (b[0] == 0x0a)
-                    break;
-            }
-            buff[i] = b[0];
-            i++;
+            buff[i++] = (byte)b;
         }
-        return new String(buff, 0, i);
+        log.error("readLine() : Buffer overflow bufferSize=" + bufferSize + " i=" + i);
+        throw new IOException("Too much receiveing data size.");
     }
 
-    public byte[] readValue(int rtLen) throws IOException {
-        byte[] b = new byte[bufferSize];
-        byte[] buff = new byte[rtLen + 7];
-        byte[] result = new byte[rtLen];
-        int receiveCount = 0;
-        int count = 0;
-
-        while (receiveCount < rtLen + 7) {
-            count = is.read(b, 0, bufferSize);
-            System.arraycopy(b, 0, buff, receiveCount, count);
-            receiveCount += count;
-        }
-        System.arraycopy(buff, 0, result, 0, rtLen);
+    public byte[] read(int n) throws IOException {
+        byte[] ret = new byte[n];
+        int off = 0, cnt = 0;
         
+        while ((n -= cnt) > 0) {
+            cnt = is.read(ret, off, n);
+            off += cnt;
+        }
+        return ret;
+    }
+    
+    public byte[] readValue(int n) throws IOException {
+        byte[] result = read(n);
+        read(2); // "\r\n"
         return result;
     }
 
