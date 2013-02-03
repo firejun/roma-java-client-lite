@@ -1,2 +1,2 @@
-roma-java-client-light
+roma-java-client-lite
 ======================
