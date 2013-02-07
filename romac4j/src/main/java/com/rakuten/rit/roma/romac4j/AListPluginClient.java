@@ -141,8 +141,12 @@ public class AListPluginClient extends ClientObject {
         return Integer.parseInt(ret);
     }
     
+    public int index(String key, String value) throws IOException {
+        return index(key, value.getBytes());
+    }
+    
     public boolean insert(String key, int index, byte[] value) throws IOException {
-        return sendCmdS("alist_insert", key, "" + index, value).isStroed();
+        return sendCmdS("alist_insert", key, "" + index + " " + value.length, value).isStroed();
     }
 
     public boolean insert(String key, int index, String value) throws IOException {
