@@ -156,7 +156,7 @@ public class AListPluginClient extends ClientObject {
     public boolean sizedInsert(String key, int size, byte[] value)
             throws IOException {
         return sendCmdS("alist_sized_insert",
-                key, "" + size + value.length, value).isStroed();
+                key, "" + size + " " + value.length, value).isStroed();
     }
 
     public boolean sizedInsert(String key, int size, String value)
