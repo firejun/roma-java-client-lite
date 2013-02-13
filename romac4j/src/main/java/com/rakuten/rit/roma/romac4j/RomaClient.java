@@ -1,6 +1,7 @@
 package com.rakuten.rit.roma.romac4j;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
@@ -123,12 +124,36 @@ public class RomaClient extends ClientObject {
         return set("prepend", key, value.getBytes(), expt);
     }
 
-    public boolean incr(String key, int value) throws IOException {
-        return sendCmdS("incr", key, "" + value).isStroed();
+    public Long incr(String key, long value) throws IOException {
+        try{
+            return Long.parseLong(sendCmdS("incr", key, "" + value).toString());
+        }catch(NumberFormatException e){
+            return null;
+        }
+    }
+    
+    public BigInteger incrBigInt(String key, long value) throws IOException {
+        try{
+            return new BigInteger(sendCmdS("incr", key, "" + value).toString());
+        }catch(NumberFormatException e){
+            return null;
+        }
     }
 
-    public boolean decr(String key, int value) throws IOException {
-        return sendCmdS("decr", key, "" + value).isStroed();
+    public Long decr(String key, long value) throws IOException {
+        try{
+            return Long.parseLong(sendCmdS("decr", key, "" + value).toString());
+        }catch(NumberFormatException e){
+            return null;
+        }
+    }
+
+    public BigInteger decrBigInt(String key, long value) throws IOException {
+        try{
+            return new BigInteger(sendCmdS("decr", key, "" + value).toString());
+        }catch(NumberFormatException e){
+            return null;
+        }
     }
 
     public boolean delete(String key) throws IOException {
