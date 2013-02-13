@@ -1,5 +1,6 @@
 package com.rakuten.rit.roma.romac4j;
 
+import java.math.BigInteger;
 import java.util.Map;
 
 import junit.extensions.TestSetup;
@@ -11,7 +12,7 @@ public class CommandTest extends TestCase {
     static RomaClient rc = null;
 
     static void oneTimeSetUp() throws Exception {
-        rc = new RomaClient("localhost_11211");
+        rc = new RomaClient("192.168.10.202_11211");
     }
 
     static void oneTimeTearDown() throws Exception {
@@ -87,12 +88,115 @@ public class CommandTest extends TestCase {
         assertEquals(3, m.size());
     }
     
+    public void testAds01() throws Exception {
+        assertNull(rc.getString("key1"));
+        assertTrue(rc.add("key1", "1", 0));
+        assertEquals("1", rc.getString("key1"));
+        assertFalse(rc.add("key1", "2", 0));
+        assertEquals("1", rc.getString("key1"));
+        assertTrue(rc.delete("key1"));
+        assertTrue(rc.add("key1", "2", 1));
+        assertEquals("2", rc.getString("key1"));
+        Thread.sleep(2000);
+        assertNull(rc.getString("key1"));
+        assertTrue(rc.add("key1", "3", 0));
+        assertEquals("3", rc.getString("key1"));        
+    }
+    
+    public void testReplace01() throws Exception {
+        assertNull(rc.getString("key1"));
+        assertFalse(rc.replace("key1", "0", 0));
+        assertNull(rc.getString("key1"));
+        assertTrue(rc.set("key1", "0", 0));
+        assertEquals("0", rc.getString("key1"));
+        assertTrue(rc.replace("key1", "1", 0));
+        assertEquals("1", rc.getString("key1"));        
+    }
+    
     public void testAppend01() throws Exception {
+        assertNull(rc.getString("key1"));
+        assertFalse(rc.append("key1", "0", 0));
+
         assertTrue(rc.set("key1", "01", 0));
         assertTrue(rc.append("key1", "02", 0));
         assertTrue(rc.append("key1", "03", 0));
         assertTrue(rc.append("key1", "04", 0));
         assertEquals("01020304", rc.getString("key1"));
+    }
+    
+    public void testPrepend01() throws Exception {
+        assertNull(rc.getString("key1"));
+        assertFalse(rc.prepend("key1", "0", 0));
+        
+        assertTrue(rc.set("key1", "01", 0));
+        assertTrue(rc.prepend("key1", "02", 0));
+        assertTrue(rc.prepend("key1", "03", 0));
+        assertTrue(rc.prepend("key1", "04", 0));
+        assertEquals("04030201", rc.getString("key1"));
+    }
+    
+    public void testIncr01() throws Exception {
+        assertNull(rc.getString("key1"));
+        assertNull(rc.incr("key1", 1));
+        
+        assertTrue(rc.set("key1", "1", 0));
+        assertEquals(2, (long)rc.incr("key1", 1));
+        assertEquals("2", rc.getString("key1"));
+        assertEquals(6, (long)rc.incr("key1", 4));
+
+        assertTrue(rc.set("key1", "A", 0));
+        assertEquals(4, (long)rc.incr("key1", 4));
+    }
+    
+    public void testIncr02() throws Exception {
+        BigInteger i = new BigInteger("fffffffffffffffe", 16);
+        
+        assertTrue(rc.set("key1", i.toString(), 0));
+        BigInteger ret = rc.incrBigInt("key1", 1);
+        assertTrue(ret.equals(new BigInteger("ffffffffffffffff", 16)));
+        assertEquals(0, (long)rc.incr("key1", 1));
+    }
+    
+    public void testDecr01() throws Exception {
+        assertNull(rc.getString("key1"));
+        assertNull(rc.decr("key1", 1));
+        
+        assertTrue(rc.set("key1", "10", 0));
+        assertEquals(9, (long)rc.decr("key1", 1));
+        assertEquals("9", rc.getString("key1"));
+        assertEquals(5, (long)rc.decr("key1", 4));
+        assertEquals(0, (long)rc.decr("key1", 10));
+
+        assertTrue(rc.set("key1", "A", 0));
+        assertEquals(0, (long)rc.decr("key1", 4));
+    }
+
+    public void testDecr02() throws Exception {
+        BigInteger i = new BigInteger("ffffffffffffffff", 16);
+        
+        assertTrue(rc.set("key1", i.toString(), 0));
+        BigInteger ret = rc.decrBigInt("key1", 1);
+        assertTrue(ret.equals(new BigInteger("fffffffffffffffe", 16)));        
+    }
+
+    public void testDelete01() throws Exception {
+        assertNull(rc.getString("key1"));
+        assertFalse(rc.delete("key1"));
+        
+        assertTrue(rc.set("key1", "10", 0));
+        assertEquals("10", rc.getString("key1"));
+        assertTrue(rc.delete("key1"));
+        assertNull(rc.getString("key1"));
+    }
+    
+    public void testSetExpt01() throws Exception {
+        assertFalse(rc.setExpt("key1", 1));
+        assertTrue(rc.set("key1", "10", 0));
+        assertEquals("10", rc.getString("key1"));
+        assertTrue(rc.setExpt("key1", 1));
+        assertEquals("10", rc.getString("key1"));
+        Thread.sleep(2000);
+        assertNull(rc.getString("key1"));
     }
     
     public void testCas01() throws Exception {
