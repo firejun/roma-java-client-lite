@@ -18,7 +18,7 @@ public class StringReceiver extends Receiver {
         return str;
     }
     
-    public boolean isStroed() {
+    public boolean isStored() {
         return str.equals("STORED");
     }
     
@@ -26,4 +26,7 @@ public class StringReceiver extends Receiver {
         return str.equals("DELETED");
     }
 
+    public boolean isCleared() {
+        return str.equals("CLEARED");
+    }
 }
