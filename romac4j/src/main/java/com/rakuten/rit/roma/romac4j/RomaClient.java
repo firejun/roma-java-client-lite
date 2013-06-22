@@ -71,7 +71,7 @@ public class RomaClient extends ClientObject {
     
     private boolean set(String cmd, String key, byte[] value, int expt)
             throws IOException {
-        return sendCmdS(cmd, key, "0 " + expt + " " + value.length, value).isStroed();
+        return sendCmdS(cmd, key, "0 " + expt + " " + value.length, value).isStored();
     }
 
     public boolean set(String key, byte[] value, int expt)
@@ -161,7 +161,7 @@ public class RomaClient extends ClientObject {
     }
 
     public boolean setExpt(String key, int expt) throws IOException {
-        return sendCmdS("set_expt", key, "" + expt).isStroed();
+        return sendCmdS("set_expt", key, "" + expt).isStored();
     }
 
     public boolean cas(String key, int expt, Cas callback) throws IOException {
@@ -177,6 +177,6 @@ public class RomaClient extends ClientObject {
         byte[] value = callback.cas(rcv);
 
         return sendCmdS("cas", key,
-                "0 " + expt + " " + value.length, value, casid).isStroed();
+                "0 " + expt + " " + value.length, value, casid).isStored();
     }
 }
