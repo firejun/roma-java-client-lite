@@ -16,21 +16,21 @@ public class MapPluginClient extends ClientObject {
 		super(nodeId);
 	}
 
-	private boolean set(String cmd, String key, String mapKey, byte[] value,
-			int expt) throws IOException {
-		return sendCmdS(cmd, key,
+	public boolean set(String key, String mapKey, byte[] value, int expt)
+			throws IOException {
+		return sendCmdS("map_set", key,
 				"" + mapKey + " 0 " + expt + " " + value.length, value)
 				.isStored();
 	}
 
 	public boolean set(String key, String mapKey, byte[] value)
 			throws IOException {
-		return set("map_set", key, mapKey, value, 0);
+		return set(key, mapKey, value, 0);
 	}
 
 	public boolean setString(String key, String mapKey, String value)
 			throws IOException {
-		return set("map_set", key, mapKey, value.getBytes(), 0);
+		return set(key, mapKey, value.getBytes(), 0);
 	}
 
 	public byte[] get(String key, String mapKey) throws IOException {
@@ -41,12 +41,26 @@ public class MapPluginClient extends ClientObject {
 		return sendCmdV("map_get", key, mapKey).getValueString();
 	}
 
-	public boolean delete(String key, String mapKey) throws IOException {
-		return sendCmdS("map_delete", key, mapKey).isDeleted();
+	public int delete(String key, String mapKey) throws IOException {
+		String ret = sendCmdS("map_delete", key, mapKey).toString();
+		if (ret.equals("NOT_DELETED"))
+			return 0;
+		else if (ret.equals("DELETED"))
+			return 1;
+		else if (ret.equals("NOT_FOUND"))
+			return -2;
+		return -1; // error
 	}
 
-	public boolean clear(String key) throws IOException {
-		return sendCmdS("map_clear", key).isCleared();
+	public int clear(String key) throws IOException {
+		String ret = sendCmdS("map_clear", key).toString();
+		if (ret.equals("NOT_CLEARED"))
+			return 0;
+		else if (ret.equals("CLEARED"))
+			return 1;
+		else if (ret.equals("NOT_FOUND"))
+			return -2;
+		return -1; // error
 	}
 
 	public int size(String key) throws IOException {
@@ -88,7 +102,7 @@ public class MapPluginClient extends ClientObject {
 		else if (ret.equals("true"))
 			return 1;
 		else if (ret.equals("NOT_FOUND"))
-			return 2;
+			return -2;
 		return -1;
 	}
 
