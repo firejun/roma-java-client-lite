@@ -1,5 +1,7 @@
 package com.rakuten.rit.roma.romac4j;
 
+import java.util.Arrays;
+
 import junit.extensions.TestSetup;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -10,7 +12,7 @@ public class MapPluginTest extends TestCase {
     static MapPluginClient mc = null;
 
     static void oneTimeSetUp() throws Exception {
-        rc = new RomaClient("localhost_11211");
+        rc = new RomaClient("10.184.17.41_11211");
         mc = new MapPluginClient(rc);
     }
 
@@ -41,18 +43,18 @@ public class MapPluginTest extends TestCase {
     }
 
     public void makeData(int n) throws Exception {
-    	String value, mapKey;
-    	for (int i=0; i > n; i++) {
-    		value = "value" + Integer.toString(i);
-    		mapKey = "mapKey" + Integer.toString(i);
+    	String mapKey, value;
+    	for (int i=0; i < n; i++) {
+    		mapKey = "mapKey" + i;
+    		value = "value" + i;
     		assertTrue(mc.set("key1", mapKey, value.getBytes()));
-    		assertEquals(value.getBytes(), mc.get("key1", mapKey));
+    		assertTrue(Arrays.equals(value.getBytes(), mc.get("key1", mapKey)));
     	}
     }
 
     public void testMapSetExpt01() throws Exception {
         assertTrue(mc.set("key1", "mapKey1", "value1".getBytes(), 1));
-        assertEquals("value1".getBytes(), mc.get("key1", "mapKey1"));
+        assertTrue(Arrays.equals("value1".getBytes(), mc.get("key1", "mapKey1")));
         Thread.sleep(2000);
         assertNull(mc.get("key1", "mapKey1"));
     }
@@ -60,9 +62,9 @@ public class MapPluginTest extends TestCase {
     public void testMapSet01() throws Exception {
     	assertNull(mc.getString("key1", "mapkey1"));
     	assertTrue(mc.set("key1", "mapKey1", "value1".getBytes()));
-    	assertEquals("value1".getBytes(), mc.get("key1", "mapKey1"));
+    	assertTrue(Arrays.equals("value1".getBytes(), mc.get("key1", "mapKey1")));
     	assertTrue(mc.set("key1", "mapKey1", "value2".getBytes()));
-    	assertEquals("value2".getBytes(), mc.get("key1", "mapKey1"));
+    	assertTrue(Arrays.equals("value2".getBytes(), mc.get("key1", "mapKey1")));
     }
 
     public void testMapDelete() throws Exception {
@@ -99,12 +101,12 @@ public class MapPluginTest extends TestCase {
     	assertEquals( 1, mc.isValue("key1", "value1".getBytes()));
     }
 
-    //def test_map_keys
-    //assert_nil @rc.map_keys('key1')
-    //mk_data
-    //v = [10]
-    //10.times{|i| v << "mapkey#{i}" }
-    //assert_equal v, @rc.map_keys('key1')
-    //end
-
+    public void testMapkeys() throws Exception {
+    	assertEquals( 0, mc.keys("key1").length);
+    	makeData(10);
+    	byte[][] ret = mc.keys("key1");
+    	for (int i=0; i < 10; i++) {
+    		assertTrue(Arrays.equals(("mapKey" + i).getBytes(), ret[i]));
+    	}
+    }
 }

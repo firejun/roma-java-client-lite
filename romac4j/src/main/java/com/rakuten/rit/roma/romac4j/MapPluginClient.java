@@ -19,7 +19,7 @@ public class MapPluginClient extends ClientObject {
 	public boolean set(String key, String mapKey, byte[] value, int expt)
 			throws IOException {
 		return sendCmdS("map_set", key,
-				"" + mapKey + " 0 " + expt + " " + value.length, value)
+				mapKey + " 0 " + expt + " " + value.length, value)
 				.isStored();
 	}
 
@@ -106,21 +106,51 @@ public class MapPluginClient extends ClientObject {
 		return -1;
 	}
 
-	public int keys(String key) throws IOException {
-		String ret = sendCmdV("map_keys", key).getValueString();
-		if (ret.contains("ERROR"))
-			return -1;
-		return Integer.parseInt(ret);
+	public byte[][] keys(String key) throws IOException {
+		ValueReceiver rcv = sendCmdV("map_keys", key);
+        int len = rcv.size() - 1;
+        if(len < 0) len = 0;
+        byte[][] ret = new byte[len][];
+        for(int i = 0; i < len; i++) {
+            ret[i] = rcv.getValue(i + 1);
+        }
+        return ret;
 	}
 
-	public int values(String key) throws IOException {
-		String ret = sendCmdV("map_values", key).getValueString();
-		if (ret.contains("ERROR"))
-			return -1;
-		return Integer.parseInt(ret);
+	public String[] keysString(String key) throws IOException {
+		ValueReceiver rcv = sendCmdV("map_keys", key);
+        int len = rcv.size() - 1;
+        if(len < 0) len = 0;
+        String[] ret = new String[len];
+        for(int i = 0; i < len; i++) {
+            ret[i] = rcv.getValueString(i + 1);
+        }
+        return ret;
 	}
 
-	public String toString(String key) throws IOException {
-		return sendCmdV("map_to_s", key).getValueString();
+	public byte[][] values(String key) throws IOException {
+		ValueReceiver rcv = sendCmdV("map_values", key);
+        int len = rcv.size() - 1;
+        if(len < 0) len = 0;
+        byte[][] ret = new byte[len][];
+        for(int i = 0; i < len; i++) {
+            ret[i] = rcv.getValue(i + 1);
+        }
+        return ret;
+	}
+
+	public String[] valuesString(String key) throws IOException {
+		ValueReceiver rcv = sendCmdV("map_values", key);
+        int len = rcv.size() - 1;
+        if(len < 0) len = 0;
+        String[] ret = new String[len];
+        for(int i = 0; i < len; i++) {
+            ret[i] = rcv.getValueString(i + 1);
+        }
+        return ret;
+	}
+	
+	public byte[] toS(String key) throws IOException {
+		return sendCmdV("map_to_s", key).getValue();
 	}
 }
