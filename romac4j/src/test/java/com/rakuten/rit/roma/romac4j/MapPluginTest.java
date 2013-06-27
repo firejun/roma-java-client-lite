@@ -12,7 +12,7 @@ public class MapPluginTest extends TestCase {
     static MapPluginClient mc = null;
 
     static void oneTimeSetUp() throws Exception {
-        rc = new RomaClient("10.184.17.41_11211");
+        rc = new RomaClient("localhost_11211");
         mc = new MapPluginClient(rc);
     }
 
