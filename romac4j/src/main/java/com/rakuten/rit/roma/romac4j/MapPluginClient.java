@@ -19,8 +19,12 @@ public class MapPluginClient extends ClientObject {
 	public boolean set(String key, String mapKey, byte[] value, int expt)
 			throws IOException {
 		return sendCmdS("map_set", key,
-				mapKey + " 0 " + expt + " " + value.length, value)
-				.isStored();
+				mapKey + " 0 " + expt + " " + value.length, value).isStored();
+	}
+
+	public boolean set(String key, String mapKey, String value, int expt)
+			throws IOException {
+		return set(key, mapKey, value.getBytes(), expt);
 	}
 
 	public boolean set(String key, String mapKey, byte[] value)
@@ -28,7 +32,7 @@ public class MapPluginClient extends ClientObject {
 		return set(key, mapKey, value, 0);
 	}
 
-	public boolean setString(String key, String mapKey, String value)
+	public boolean set(String key, String mapKey, String value)
 			throws IOException {
 		return set(key, mapKey, value.getBytes(), 0);
 	}
@@ -108,48 +112,52 @@ public class MapPluginClient extends ClientObject {
 
 	public byte[][] keys(String key) throws IOException {
 		ValueReceiver rcv = sendCmdV("map_keys", key);
-        int len = rcv.size() - 1;
-        if(len < 0) len = 0;
-        byte[][] ret = new byte[len][];
-        for(int i = 0; i < len; i++) {
-            ret[i] = rcv.getValue(i + 1);
-        }
-        return ret;
+		int len = rcv.size() - 1;
+		if (len < 0)
+			len = 0;
+		byte[][] ret = new byte[len][];
+		for (int i = 0; i < len; i++) {
+			ret[i] = rcv.getValue(i + 1);
+		}
+		return ret;
 	}
 
 	public String[] keysString(String key) throws IOException {
 		ValueReceiver rcv = sendCmdV("map_keys", key);
-        int len = rcv.size() - 1;
-        if(len < 0) len = 0;
-        String[] ret = new String[len];
-        for(int i = 0; i < len; i++) {
-            ret[i] = rcv.getValueString(i + 1);
-        }
-        return ret;
+		int len = rcv.size() - 1;
+		if (len < 0)
+			len = 0;
+		String[] ret = new String[len];
+		for (int i = 0; i < len; i++) {
+			ret[i] = rcv.getValueString(i + 1);
+		}
+		return ret;
 	}
 
 	public byte[][] values(String key) throws IOException {
 		ValueReceiver rcv = sendCmdV("map_values", key);
-        int len = rcv.size() - 1;
-        if(len < 0) len = 0;
-        byte[][] ret = new byte[len][];
-        for(int i = 0; i < len; i++) {
-            ret[i] = rcv.getValue(i + 1);
-        }
-        return ret;
+		int len = rcv.size() - 1;
+		if (len < 0)
+			len = 0;
+		byte[][] ret = new byte[len][];
+		for (int i = 0; i < len; i++) {
+			ret[i] = rcv.getValue(i + 1);
+		}
+		return ret;
 	}
 
 	public String[] valuesString(String key) throws IOException {
 		ValueReceiver rcv = sendCmdV("map_values", key);
-        int len = rcv.size() - 1;
-        if(len < 0) len = 0;
-        String[] ret = new String[len];
-        for(int i = 0; i < len; i++) {
-            ret[i] = rcv.getValueString(i + 1);
-        }
-        return ret;
+		int len = rcv.size() - 1;
+		if (len < 0)
+			len = 0;
+		String[] ret = new String[len];
+		for (int i = 0; i < len; i++) {
+			ret[i] = rcv.getValueString(i + 1);
+		}
+		return ret;
 	}
-	
+
 	public byte[] toS(String key) throws IOException {
 		return sendCmdV("map_to_s", key).getValue();
 	}
