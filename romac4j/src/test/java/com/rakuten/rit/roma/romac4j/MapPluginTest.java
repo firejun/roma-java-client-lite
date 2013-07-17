@@ -160,6 +160,6 @@ public class MapPluginTest extends TestCase {
 		}
 		str.delete(str.length() - 2, str.length());
 		str.append("}");
-		assertTrue(Arrays.equals(str.toString().getBytes(), mc.toS("key1")));
+		assertEquals(str.toString(), mc.toS("key1"));
 	}
 }

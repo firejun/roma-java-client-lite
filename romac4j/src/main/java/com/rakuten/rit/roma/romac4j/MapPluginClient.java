@@ -158,7 +158,7 @@ public class MapPluginClient extends ClientObject {
 		return ret;
 	}
 
-	public byte[] toS(String key) throws IOException {
-		return sendCmdV("map_to_s", key).getValue();
+	public String toS(String key) throws IOException {
+		return sendCmdV("map_to_s", key).getValueString();
 	}
 }
